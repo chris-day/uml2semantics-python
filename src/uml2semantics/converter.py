@@ -76,17 +76,90 @@ def _datatype_iri(type_token: str) -> URIRef:
     return URIRef(type_token)
 
 
+def _build_restricted_datatype(
+    g: Graph,
+    base_dt: URIRef,
+    row: Dict[str, str],
+) -> URIRef:
+    """Build an owl:DatatypeRestriction node if facet columns are present in the row.
+    Supported facet columns in Attributes.tsv:
+      - MinInclusive, MaxInclusive, MinExclusive, MaxExclusive
+      - Pattern
+      - MinLength, MaxLength
+      - TotalDigits, FractionDigits
+
+    If no facets are present, returns base_dt unchanged.
+    """
+    facets: Dict[str, str] = {}
+
+    if row.get("MinInclusive"):
+        facets["minInclusive"] = row["MinInclusive"]
+    if row.get("MaxInclusive"):
+        facets["maxInclusive"] = row["MaxInclusive"]
+    if row.get("MinExclusive"):
+        facets["minExclusive"] = row["MinExclusive"]
+    if row.get("MaxExclusive"):
+        facets["maxExclusive"] = row["MaxExclusive"]
+
+    if row.get("MinLength"):
+        facets["minLength"] = row["MinLength"]
+    if row.get("MaxLength"):
+        facets["maxLength"] = row["MaxLength"]
+
+    if row.get("TotalDigits"):
+        facets["totalDigits"] = row["TotalDigits"]
+    if row.get("FractionDigits"):
+        facets["fractionDigits"] = row["FractionDigits"]
+
+    if row.get("Pattern"):
+        facets["pattern"] = row["Pattern"]
+
+    if not facets:
+        return base_dt
+
+    dt_node = BNode()
+    g.add((dt_node, RDF.type, OWL.DatatypeRestriction))
+    g.add((dt_node, OWL.onDatatype, base_dt))
+
+    lst = BNode()
+    g.add((dt_node, OWL.withRestrictions, lst))
+
+    facet_nodes = []
+    for facet_name, literal_lex in facets.items():
+        facet_node = BNode()
+        facet_prop = getattr(XSD, facet_name)
+
+        if facet_name in {"minInclusive", "maxInclusive", "minExclusive", "maxExclusive"}:
+            lit_dt = base_dt
+        elif facet_name in {"minLength", "maxLength", "totalDigits", "fractionDigits"}:
+            lit_dt = XSD.integer
+        elif facet_name == "pattern":
+            lit_dt = XSD.string
+        else:
+            lit_dt = XSD.string
+
+        g.add((facet_node, facet_prop, Literal(literal_lex, datatype=lit_dt)))
+        facet_nodes.append(facet_node)
+
+    Collection(g, lst, facet_nodes)
+
+    return dt_node
+
+
 Node = Union[URIRef, BNode]
 
 
 class Uml2OwlConverter:
     """Core converter: given TSV rows (already parsed), produce an OWL ontology,
-    including Choice (union) with optional exclusive semantics (disjointness to choice class).
+    including Choice (union) with optional exclusive semantics (disjointness to choice class),
+    and datatype facets mapped to owl:DatatypeRestriction.
     """
 
     def __init__(self, base_iri: str, prefixes: Dict[str, Namespace] | None = None):
         if not base_iri:
             raise ValueError("base_iri (ontology IRI) is required")
+
+
 
         self.base_iri = base_iri.rstrip("#/")
         self.prefixes = prefixes or {}
@@ -108,8 +181,6 @@ class Uml2OwlConverter:
         self.enum_value_iris: Dict[Tuple[str, str], URIRef] = {}
         self.property_iris: Dict[Tuple[str, str], URIRef] = {}
 
-    # ---------- Classes / Enums -------------------------------------------------
-
     def add_classes(self, rows: List[Dict[str, str]]) -> None:
         for row in rows:
             curie = row.get("Curie", "")
@@ -119,6 +190,8 @@ class Uml2OwlConverter:
 
             if not (curie or name):
                 raise ValueError("Class row requires at least Curie or Name")
+
+
 
             cls_iri = _resolve_iri(curie or name, self.prefixes,
                                    self.base_iri, "class", fallback_label=name)
@@ -150,6 +223,8 @@ class Uml2OwlConverter:
             if not (curie or name):
                 raise ValueError("Enumeration row requires Curie or Name")
 
+
+
             enum_iri = _resolve_iri(curie or name, self.prefixes,
                                     self.base_iri, "enumeration", fallback_label=name)
             key = curie or name
@@ -173,6 +248,8 @@ class Uml2OwlConverter:
                 raise ValueError("EnumerationNamedValues row missing 'Enumeration'")
             if not (curie or name):
                 raise ValueError("EnumerationNamedValues row requires Curie or Name")
+
+
 
             enum_cls_iri = self.enum_class_iris.get(enum_ref)
             if not enum_cls_iri:
@@ -201,13 +278,13 @@ class Uml2OwlConverter:
             if definition:
                 g.add((indiv_iri, RDFS.comment, Literal(definition)))
 
-    # ---------- Attributes ------------------------------------------------------
-
     def add_attributes(self, rows: List[Dict[str, str]]) -> None:
         for row in rows:
             cls_ref = (row.get("Class") or row.get("ClassCurie") or "").strip()
             if not cls_ref:
                 raise ValueError("Attribute row missing 'Class'")
+
+
 
             attr_curie = (row.get("Curie") or "").strip()
             attr_name = (row.get("Name") or "").strip()
@@ -242,7 +319,8 @@ class Uml2OwlConverter:
                 is_datatype = False
             elif _is_xsd_datatype(type_ref):
                 prop_type = OWL.DatatypeProperty
-                range_iri = _datatype_iri(type_ref)
+                base_dt = _datatype_iri(type_ref)
+                range_iri = _build_restricted_datatype(self.graph, base_dt, row)
                 is_datatype = True
             else:
                 prop_type = OWL.ObjectProperty
@@ -259,6 +337,8 @@ class Uml2OwlConverter:
                         "range-class",
                         fallback_label=type_ref,
                     )
+
+
 
             g.add((prop_iri, RDF.type, prop_type))
             g.add((prop_iri, RDFS.domain, domain_iri))
@@ -277,8 +357,6 @@ class Uml2OwlConverter:
                 max_mult,
             )
 
-    # ---------- Choice support --------------------------------------------------
-
     def add_choices_from_classes(self, class_rows: List[Dict[str, str]]) -> None:
         """Option A: read ChoiceOf & ChoiceSemantics from Classes.tsv rows."""
         for row in class_rows:
@@ -295,7 +373,6 @@ class Uml2OwlConverter:
 
     def add_choices(self, choices_rows: List[Dict[str, str]], member_rows: List[Dict[str, str]]) -> None:
         """Option B: separate Choices.tsv and ChoiceMembers.tsv."""
-        # Index members
         by_choice: Dict[str, list[Dict[str, str]]] = {}
         for m in member_rows or []:
             by_choice.setdefault(m.get("ChoiceClass", ""), []).append(m)
@@ -307,7 +384,6 @@ class Uml2OwlConverter:
             semantics = (row.get("Semantics") or "exclusive").strip().lower()
             choice_cls = _resolve_iri(choice_name, self.prefixes, self.base_iri, "choice-class")
             members = by_choice.get(choice_name, [])
-            # Build disjuncts
             disjuncts: list[Node] = []
             for m in members:
                 kind = (m.get("Kind") or "").strip().lower()
@@ -330,35 +406,29 @@ class Uml2OwlConverter:
             if disjuncts:
                 self._emit_choice_axioms(choice_cls, disjuncts, semantics)
 
-    # ---------- Internals -------------------------------------------------------
-
     def _parse_choice_disjuncts(self, choice_of: str) -> list[Node]:
         parts = [p.strip() for p in choice_of.split("|") if p.strip()]
         disjuncts: list[Node] = []
         for part in parts:
             if "xsd:" in part and ":" in part:
-                # propertyName:xsd:type
                 prop, dtype = part.split(":", 1)
                 prop_iri = _resolve_iri(prop, self.prefixes, self.base_iri, "property", fallback_label=prop)
                 restr = BNode()
-                self.graph.add((restr, RDF.type, OWL.Restriction))
+                self.graph.add((restr, RDF.type, OWLObject = OWL.Restriction))
                 self.graph.add((restr, OWL.onProperty, prop_iri))
                 self.graph.add((restr, OWL.someValuesFrom, _datatype_iri(dtype)))
                 disjuncts.append(restr)
             else:
-                # class (name or CURIE)
                 disjuncts.append(_resolve_iri(part, self.prefixes, self.base_iri, "class", fallback_label=part))
         return disjuncts
 
     def _emit_choice_axioms(self, choice_cls: URIRef, disjuncts: list[Node], semantics: str) -> None:
-        # 1) SubClassOf (unionOf disjuncts)
         union_node = BNode()
         Collection(self.graph, union_node, disjuncts)
         union_expr = BNode()
         self.graph.add((union_expr, OWL.unionOf, union_node))
         self.graph.add((choice_cls, RDFS.subClassOf, union_expr))
 
-        # 2) Disjointness against each disjunct if exclusive (XOR flavour)
         if semantics == "exclusive":
             for disj in disjuncts:
                 ax = BNode()
@@ -366,8 +436,6 @@ class Uml2OwlConverter:
                 self.graph.add((ax, RDF.type, OWL.AllDisjointClasses))
                 self.graph.add((ax, OWL.members, mem))
                 Collection(self.graph, mem, [choice_cls, disj])
-
-    # ---------- Multiplicity ----------------------------------------------------
 
     def _add_multiplicity_restrictions(
         self,

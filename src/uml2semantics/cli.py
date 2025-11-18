@@ -32,7 +32,6 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("-p", "--prefix",
                    help="Prefix mapping, e.g. 'iso:http://example.org/ns#' or multiple separated by commas.")
     p.add_argument("-i", "--ontology-iri", required=True, help="Ontology IRI / base IRI.")
-    # Choice (Option B) optional sheets
     p.add_argument("--choices", help="TSV with Choices (ChoiceClass, Semantics, Definition)")
     p.add_argument("--choice-members", help="TSV with ChoiceMembers (ChoiceClass, Kind, Ref | Datatype, Property)")
 
@@ -53,18 +52,14 @@ def main() -> None:
 
     conv.add_classes(class_rows)
 
-    # Optional enumerations
     if enum_rows:
         conv.add_enumerations(enum_rows)
     if enum_val_rows:
         conv.add_enum_values(enum_val_rows)
 
-    # Attributes next
     conv.add_attributes(attr_rows)
 
-    # Choice support
     conv.add_choices_from_classes(class_rows)
-    # Optional external choice sheets
     if args.choices or args.choice_members:
         choices_rows = read_tsv(args.choices)
         choice_member_rows = read_tsv(args.choice_members)

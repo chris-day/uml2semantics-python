@@ -1,3 +1,9 @@
 Curie	Name	ParentNames	Definition	ChoiceOf	ChoiceSemantics
 iso:AckRsn7Choice	AcknowledgementReason7Choice		Choice between code or additional textual reason	AcknowledgementReason7Code|AddtlRsnInf:xsd:string	exclusive
 iso:AckRsn7Code	AcknowledgementReason7Code		Code list for acknowledgement reasons		
+iso:FinInstrmQty1Choice	FinancialInstrumentQuantity1Choice		Choice relating to quantities of a financial instrument		
+iso:OrigAndCurQty1	OriginalAndCurrentQuantities1		Structure containing original and current quantities		
+iso:ImpliedCcyAmt	ImpliedCurrencyAndAmount		A currency+amount structure with implied semantics		
+iso:Qty6Choice	Quantity6Choice		Exclusive choice between quantity choice or original/current quantities	FinancialInstrumentQuantity1Choice|OriginalAndCurrentQuantities1	exclusive
+iso:InterestRate	InterestRate		Interest rate container		
+iso:Schedule1	Schedule1		Schedule container		
