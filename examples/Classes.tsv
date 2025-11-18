@@ -1,0 +1,3 @@
+Curie	Name	ParentNames	Definition	ChoiceOf	ChoiceSemantics
+iso:AckRsn7Choice	AcknowledgementReason7Choice		Choice between code or additional textual reason	AcknowledgementReason7Code|AddtlRsnInf:xsd:string	exclusive
+iso:AckRsn7Code	AcknowledgementReason7Code		Code list for acknowledgement reasons		

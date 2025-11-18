@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "uml2semantics"
+version = "0.2.0"
+description = "Convert UML-style TSV specifications into OWL 2 ontologies, including ISO 20022-style Choice patterns."
+authors = [
+  { name = "Your Name" }
+]
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+dependencies = [
+  "rdflib>=7.0.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/chris-day/uml2semantics-python"
+
+[project.scripts]
+uml2semantics = "uml2semantics.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
