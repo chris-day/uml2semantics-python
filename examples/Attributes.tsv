@@ -1,0 +1,2 @@
+Class	Curie	Name	ClassEnumOrPrimitiveType	MinMultiplicity	MaxMultiplicity	Definition
+AcknowledgementReason7Choice		AddtlRsnInf	xsd:string	0	1	Additional reason information as free text
