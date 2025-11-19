@@ -1,8 +1,2 @@
 Class	Curie	Name	ClassEnumOrPrimitiveType	MinMultiplicity	MaxMultiplicity	Definition	MinInclusive	MaxInclusive	MinExclusive	MaxExclusive	Pattern	MinLength	MaxLength	TotalDigits	FractionDigits
-AcknowledgementReason7Choice		AddtlRsnInf	xsd:string	0	1	Additional reason information as free text					^[A-Z0-9 ]+$	1	140		
-OriginalAndCurrentQuantities1		FaceAmount	ImpliedCurrencyAndAmount	1	1	Face amount expressed with an implied currency and amount									
-InterestRate		FixedRate	xsd:decimal	0	1	Interest rate in percent	0	100						5	4
-Schedule1		EffectiveMonth	xsd:gYearMonth	1	1	Effective month in YYYY-MM format					^[0-9]{4}-(0[1-9]|1[0-2])$				
-PartyIdentification		AccountId	ISO4217CurrencyCode	1	1	Account currency code (ISO 4217)									
-PartyIdentification		AccountBIC	BIC11	0	1	Account BIC in 11-character format									
-PartyIdentification		AccountLEI	LEI20	0	1	Account Legal Entity Identifier									
+PartyIdentification		AccountCurrencyCode	CurrencyCode	1	1	Account currency expressed as an ISO 4217 enumeration value									
