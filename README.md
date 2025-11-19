@@ -9,15 +9,14 @@ Supported inputs:
 - EnumerationNamedValues.tsv
 - Datatypes.tsv
 
-## New in v0.5.0
+## New in v0.5.1
 
-- Added **ISO 4217 CurrencyCode enumeration examples**:
-  - `examples/Enumerations.tsv` defining `CurrencyCode`
-  - `examples/EnumerationNamedValues.tsv` with `GBP`, `EUR`, `USD`, `JPY`, `CHF`
-  - `examples/Attributes.tsv` now includes `PartyIdentification.AccountCurrencyCode` using the enumeration.
-- Retains:
+- Fix: use an open OWL namespace for `DatatypeRestriction` and an open XSD namespace for facet IRIs.
+  - This resolves `AttributeError: term 'DatatypeRestriction' not in namespace 'http://www.w3.org/2002/07/owl#'`.
+- Keeps:
   - Named datatypes via `Datatypes.tsv` (e.g. `ISO4217CurrencyCode`).
   - Datatype facets for attributes.
+  - ISO 4217 `CurrencyCode` enumeration examples.
 
 ## Quickstart
 

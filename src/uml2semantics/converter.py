@@ -5,6 +5,10 @@ from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF, RDFS, OWL, XSD
 from rdflib.collection import Collection
 
+# Open namespaces for terms rdflib's ClosedNamespace doesn't expose
+OWL_NS = Namespace(str(OWL))
+XSD_FACET = Namespace(str(XSD))
+
 
 @dataclass
 class PrefixConfig:
@@ -75,6 +79,16 @@ def _build_restricted_datatype(
     base_dt: URIRef,
     row: Dict[str, str],
 ) -> URIRef:
+    """Build an owl:DatatypeRestriction node if facet columns are present in the row.
+
+    Supported facet columns (on either Attributes.tsv or Datatypes.tsv):
+      - MinInclusive, MaxInclusive, MinExclusive, MaxExclusive
+      - Pattern
+      - MinLength, MaxLength
+      - TotalDigits, FractionDigits
+
+    If no facets are present, returns base_dt unchanged.
+    """
     facets: Dict[str, str] = {}
 
     if row.get("MinInclusive"):
@@ -103,7 +117,8 @@ def _build_restricted_datatype(
         return base_dt
 
     dt_node = BNode()
-    g.add((dt_node, RDF.type, OWL.DatatypeRestriction))
+    # Use open OWL namespace so DatatypeRestriction is always available
+    g.add((dt_node, RDF.type, OWL_NS.DatatypeRestriction))
     g.add((dt_node, OWL.onDatatype, base_dt))
 
     lst = BNode()
@@ -112,7 +127,8 @@ def _build_restricted_datatype(
     facet_nodes = []
     for facet_name, literal_lex in facets.items():
         facet_node = BNode()
-        facet_prop = getattr(XSD, facet_name)
+        # Use open XSD namespace for facet IRIs (minInclusive, pattern, etc.)
+        facet_prop = XSD_FACET[facet_name]
 
         if facet_name in {"minInclusive", "maxInclusive", "minExclusive", "maxExclusive"}:
             lit_dt = base_dt
@@ -385,7 +401,7 @@ class Uml2OwlConverter:
         if not min_m and not max_m:
             min_m, max_m = "1", "1"
 
-        if min_m and min_m != "0":
+        if min_m and min_m != "0"]:
             r = BNode()
             g.add((domain_iri, RDFS.subClassOf, r))
             g.add((r, RDF.type, OWL.Restriction))
