@@ -28,6 +28,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("-a", "--attributes", required=True, help="TSV file with Attributes / Associations")
     p.add_argument("-e", "--enumerations", help="TSV file with Enumerations (optional)")
     p.add_argument("-n", "--enum-values", help="TSV file with Enumeration Named Values (optional)")
+    p.add_argument("--datatypes", help="TSV with Datatypes (optional)")
     p.add_argument("-o", "--output", required=True, help="Output ontology file. Format inferred from extension")
     p.add_argument("-p", "--prefix",
                    help="Prefix mapping, e.g. 'iso:http://example.org/ns#' or multiple separated by commas.")
@@ -49,6 +50,11 @@ def main() -> None:
     attr_rows = read_tsv(args.attributes)
     enum_rows = read_tsv(args.enumerations)
     enum_val_rows = read_tsv(args.enum_values)
+    datatype_rows = read_tsv(args.datatypes)
+
+    # Datatypes first so Attributes can reuse them
+    if datatype_rows:
+        conv.add_datatypes(datatype_rows)
 
     conv.add_classes(class_rows)
 
