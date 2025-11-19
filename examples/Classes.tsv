@@ -1,2 +1,6 @@
 Curie	Name	ParentNames	Definition	ChoiceOf	ChoiceSemantics
-iso:PartyId	PartyIdentification		Party identification container		
+iso:PartyIdentification	PartyIdentification		Party identification container		
+iso:TradePtyId	TradePartyIdentification		Trade party identification container		
+iso:PtyIdChoice	PartyIdChoice		Exclusive choice of LEI or BIC	PartyIdentificationLEI|PartyIdentificationBIC	exclusive
+iso:PtyIdLEI	PartyIdentificationLEI		Party identification via LEI only		
+iso:PtyIdBIC	PartyIdentificationBIC		Party identification via BIC only		

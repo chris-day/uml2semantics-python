@@ -5,7 +5,7 @@ from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF, RDFS, OWL, XSD
 from rdflib.collection import Collection
 
-# Open namespaces for terms rdflib's ClosedNamespace doesn't expose
+# Open namespaces for terms not exposed on rdflib's ClosedNamespace
 OWL_NS = Namespace(str(OWL))
 XSD_FACET = Namespace(str(XSD))
 
@@ -79,7 +79,7 @@ def _build_restricted_datatype(
     base_dt: URIRef,
     row: Dict[str, str],
 ) -> URIRef:
-    """Build an owl:DatatypeRestriction node if facet columns are present in the row.
+    """Build an owl:DatatypeRestriction node if facet columns are present.
 
     Supported facet columns (on either Attributes.tsv or Datatypes.tsv):
       - MinInclusive, MaxInclusive, MinExclusive, MaxExclusive
@@ -175,6 +175,9 @@ class Uml2OwlConverter:
         self.enum_value_iris: Dict[Tuple[str, str], URIRef] = {}
         self.property_iris: Dict[Tuple[str, str], URIRef] = {}
         self.named_datatypes: Dict[str, URIRef] = {}
+        self.annotation_prop_iris: Dict[str, URIRef] = {}
+
+    # ---------- Datatypes -------------------------------------------------------
 
     def add_datatypes(self, rows: List[Dict[str, str]]) -> None:
         for row in rows:
@@ -207,6 +210,8 @@ class Uml2OwlConverter:
                 g.add((dt_iri, OWL.equivalentClass, restriction_node))
 
             self.named_datatypes[key] = dt_iri
+
+    # ---------- Classes / Enums -------------------------------------------------
 
     def add_classes(self, rows: List[Dict[str, str]]) -> None:
         for row in rows:
@@ -301,6 +306,8 @@ class Uml2OwlConverter:
             if definition:
                 g.add((indiv_iri, RDFS.comment, Literal(definition)))
 
+    # ---------- Attributes ------------------------------------------------------
+
     def add_attributes(self, rows: List[Dict[str, str]]) -> None:
         for row in rows:
             cls_ref = (row.get("Class") or row.get("ClassCurie") or "").strip()
@@ -384,6 +391,8 @@ class Uml2OwlConverter:
                 max_mult,
             )
 
+    # ---------- Multiplicity ----------------------------------------------------
+
     def _add_multiplicity_restrictions(
         self,
         domain_iri: URIRef,
@@ -398,16 +407,29 @@ class Uml2OwlConverter:
         min_m = (min_mult or "").strip()
         max_m = (max_mult or "").strip()
 
+        # Default multiplicity = 1..1
         if not min_m and not max_m:
             min_m, max_m = "1", "1"
 
-        if min_m and min_m != "0"]:
+        # Exact cardinality when both numeric and equal
+        if min_m.isdigit() and max_m.isdigit() and int(min_m) == int(max_m):
+            card = int(min_m)
+            r = BNode()
+            g.add((domain_iri, RDFS.subClassOf, r))
+            g.add((r, RDF.type, OWL.Restriction))
+            g.add((r, OWL.onProperty, prop_iri))
+            g.add((r, OWL.cardinality, Literal(card)))
+            return
+
+        # someValuesFrom if min > 0
+        if min_m and min_m != "0":
             r = BNode()
             g.add((domain_iri, RDFS.subClassOf, r))
             g.add((r, RDF.type, OWL.Restriction))
             g.add((r, OWL.onProperty, prop_iri))
             g.add((r, OWL.someValuesFrom, range_iri))
 
+        # maxCardinality restriction if max is numeric
         if max_m and max_m != "*" and max_m.isdigit():
             card = int(max_m)
             r = BNode()
@@ -415,3 +437,99 @@ class Uml2OwlConverter:
             g.add((r, RDF.type, OWL.Restriction))
             g.add((r, OWL.onProperty, prop_iri))
             g.add((r, OWL.maxCardinality, Literal(card)))
+
+    # ---------- Annotation properties ------------------------------------------
+
+    def add_annotation_properties(self, rows: List[Dict[str, str]]) -> None:
+        for row in rows:
+            curie = (row.get("Curie") or "").strip()
+            name = (row.get("Name") or "").strip()
+            definition = (row.get("Definition") or "").strip()
+
+            key = curie or name
+            if not key:
+                raise ValueError("AnnotationProperties.tsv row requires Curie or Name")
+
+            ap_iri = _resolve_iri(curie or name, self.prefixes, self.base_iri,
+                                  "annotation-property", fallback_label=name or curie)
+
+            g = self.graph
+            g.add((ap_iri, RDF.type, OWL.AnnotationProperty))
+            if name:
+                g.add((ap_iri, RDFS.label, Literal(name)))
+            if definition:
+                g.add((ap_iri, RDFS.comment, Literal(definition)))
+
+            self.annotation_prop_iris[key] = ap_iri
+
+    def _resolve_annotation_target(self, kind: str, ident: str) -> URIRef:
+        kind_l = (kind or "").strip().lower()
+        ident = (ident or "").strip()
+
+        # Ontology-level annotations
+        if kind_l == "ontology":
+            return self.ontology_iri
+
+        # Attempt direct CURIE/IRI resolution first
+        if ident:
+            direct = _resolve_iri(ident, self.prefixes, self.base_iri,
+                                  "annotation-target", fallback_label=ident)
+        else:
+            direct = self.ontology_iri
+
+        if kind_l == "class":
+            return self.class_iris.get(ident, direct)
+        if kind_l == "datatype":
+            return self.named_datatypes.get(ident, direct)
+        if kind_l in {"enumeration", "enum"}:
+            return self.enum_class_iris.get(ident, direct)
+        if kind_l in {"property", "objectproperty", "datatypeproperty"}:
+            for (_, name), iri in self.property_iris.items():
+                if name == ident:
+                    return iri
+            return direct
+        if kind_l == "individual":
+            for (_, name), iri in self.enum_value_iris.items():
+                if name == ident:
+                    return iri
+            return direct
+
+        return direct
+
+    def _build_annotation_literal(self, value: str, lang: str, datatype: str) -> Literal:
+        value = value or ""
+        lang = (lang or "").strip()
+        dt = (datatype or "").strip()
+
+        if dt:
+            dt_iri = _datatype_iri(dt) if _is_xsd_datatype(dt) else URIRef(dt)
+            return Literal(value, datatype=dt_iri)
+        if lang:
+            return Literal(value, lang=lang)
+        return Literal(value)
+
+    def add_annotations(self, rows: List[Dict[str, str]]) -> None:
+        for row in rows:
+            kind = row.get("TargetKind", "")
+            target_id = row.get("TargetId", "")
+            prop_id = row.get("PropertyId", "")
+            value = row.get("Value", "")
+            lang = row.get("Lang", "")
+            datatype = row.get("Datatype", "")
+
+            if not prop_id:
+                raise ValueError("Annotations.tsv row missing PropertyId")
+
+            target_iri = self._resolve_annotation_target(kind, target_id)
+
+            # Resolve or mint the annotation property IRI
+            if prop_id in self.annotation_prop_iris:
+                ap_iri = self.annotation_prop_iris[prop_id]
+            else:
+                ap_iri = _resolve_iri(prop_id, self.prefixes, self.base_iri,
+                                      "annotation-property", fallback_label=prop_id)
+                # Treat it as an annotation property in the graph
+                self.graph.add((ap_iri, RDF.type, OWL.AnnotationProperty))
+
+            lit = self._build_annotation_literal(value, lang, datatype)
+            self.graph.add((target_iri, ap_iri, lit))

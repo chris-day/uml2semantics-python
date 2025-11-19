@@ -1,0 +1,4 @@
+Curie	Name	Definition
+rdfs:comment	comment	Human-readable description
+iso:status	status	ISO 20022 lifecycle / registration status
+iso:release	release	ISO 20022 release identifier (e.g. 2025-06)
