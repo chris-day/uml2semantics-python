@@ -29,6 +29,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("-e", "--enumerations", help="TSV file with Enumerations (optional)")
     p.add_argument("-n", "--enum-values", help="TSV file with Enumeration Named Values (optional)")
     p.add_argument("--datatypes", help="TSV with Datatypes (optional)")
+    p.add_argument("--annotation-properties", help="TSV with Annotation Properties (optional)")
+    p.add_argument("--annotations", help="TSV with Annotations (optional)")
     p.add_argument("-o", "--output", required=True, help="Output ontology file. Format inferred from extension")
     p.add_argument("-p", "--prefix",
                    help="Prefix mapping, e.g. 'iso:http://example.org/ns#' or multiple separated by commas.")
@@ -49,6 +51,11 @@ def main() -> None:
     enum_rows = read_tsv(args.enumerations)
     enum_val_rows = read_tsv(args.enum_values)
     datatype_rows = read_tsv(args.datatypes)
+    ann_prop_rows = read_tsv(args.annotation_properties)
+    ann_rows = read_tsv(args.annotations)
+
+    if ann_prop_rows:
+        conv.add_annotation_properties(ann_prop_rows)
 
     if datatype_rows:
         conv.add_datatypes(datatype_rows)
@@ -61,6 +68,9 @@ def main() -> None:
         conv.add_enum_values(enum_val_rows)
 
     conv.add_attributes(attr_rows)
+
+    if ann_rows:
+        conv.add_annotations(ann_rows)
 
     out_path = Path(args.output)
     fmt = _guess_format(out_path)

@@ -1,2 +1,5 @@
 Class	Curie	Name	ClassEnumOrPrimitiveType	MinMultiplicity	MaxMultiplicity	Definition	MinInclusive	MaxInclusive	MinExclusive	MaxExclusive	Pattern	MinLength	MaxLength	TotalDigits	FractionDigits
 PartyIdentification		AccountCurrencyCode	CurrencyCode	1	1	Account currency expressed as an ISO 4217 enumeration value									
+TradePartyIdentification		PartyIdChoiceRef	PartyIdChoice	1	1	Choice between identifiers for the trade party									
+PartyIdentificationLEI		LEI	LEI20	1	1	Legal Entity Identifier for the trade party									
+PartyIdentificationBIC		BIC	BIC11	1	1	Business Identifier Code for the trade party									
