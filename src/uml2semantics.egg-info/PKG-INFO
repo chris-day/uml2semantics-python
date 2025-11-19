@@ -1,3 +1,16 @@
+Metadata-Version: 2.4
+Name: uml2semantics
+Version: 0.5.1
+Summary: Convert UML-style TSV specifications into OWL 2 ontologies, including ISO 20022-style Choice patterns.
+Author: Your Name
+License: Apache-2.0
+Project-URL: Homepage, https://github.com/chris-day/uml2semantics-python
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: rdflib>=7.0.0
+Dynamic: license-file
+
 # uml2semantics (Python)
 
 CLI/library to convert UML-style TSV specifications into an OWL 2 ontology using rdflib.

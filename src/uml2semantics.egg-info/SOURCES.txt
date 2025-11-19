@@ -1,0 +1,15 @@
+LICENSE
+README.md
+pyproject.toml
+src/uml2semantics/__init__.py
+src/uml2semantics/__main__.py
+src/uml2semantics/cli.py
+src/uml2semantics/converter.py
+src/uml2semantics/tsv.py
+src/uml2semantics.egg-info/PKG-INFO
+src/uml2semantics.egg-info/SOURCES.txt
+src/uml2semantics.egg-info/dependency_links.txt
+src/uml2semantics.egg-info/entry_points.txt
+src/uml2semantics.egg-info/requires.txt
+src/uml2semantics.egg-info/top_level.txt
+tests/test_smoke.py
