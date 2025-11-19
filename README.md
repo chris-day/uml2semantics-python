@@ -3,7 +3,7 @@
 CLI/library to convert UML-style TSV specifications (Classes, Attributes, Enumerations, EnumerationNamedValues, Datatypes)
 into an OWL 2 ontology using rdflib.
 
-Based upon the orginal works by Henriette Harmse https://github.com/henrietteharmse/uml2semantics
+Based upon the original works by Henriette Harmse https://github.com/henrietteharmse/uml2semantics
 
 ## New in v0.4.0
 
