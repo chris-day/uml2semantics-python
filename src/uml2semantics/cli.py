@@ -33,8 +33,6 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("-p", "--prefix",
                    help="Prefix mapping, e.g. 'iso:http://example.org/ns#' or multiple separated by commas.")
     p.add_argument("-i", "--ontology-iri", required=True, help="Ontology IRI / base IRI.")
-    p.add_argument("--choices", help="TSV with Choices (ChoiceClass, Semantics, Definition)")
-    p.add_argument("--choice-members", help="TSV with ChoiceMembers (ChoiceClass, Kind, Ref | Datatype, Property)")
 
     return p
 
@@ -52,7 +50,6 @@ def main() -> None:
     enum_val_rows = read_tsv(args.enum_values)
     datatype_rows = read_tsv(args.datatypes)
 
-    # Datatypes first so Attributes can reuse them
     if datatype_rows:
         conv.add_datatypes(datatype_rows)
 
@@ -64,12 +61,6 @@ def main() -> None:
         conv.add_enum_values(enum_val_rows)
 
     conv.add_attributes(attr_rows)
-
-    conv.add_choices_from_classes(class_rows)
-    if args.choices or args.choice_members:
-        choices_rows = read_tsv(args.choices)
-        choice_member_rows = read_tsv(args.choice_members)
-        conv.add_choices(choices_rows, choice_member_rows)
 
     out_path = Path(args.output)
     fmt = _guess_format(out_path)
