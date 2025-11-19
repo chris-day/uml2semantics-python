@@ -82,7 +82,7 @@ def _build_restricted_datatype(
     row: Dict[str, str],
 ) -> URIRef:
     """Build an owl:DatatypeRestriction node if facet columns are present in the row.
-    Supported facet columns in Attributes.tsv:
+    Supported facet columns (on either Attributes.tsv or Datatypes.tsv):
       - MinInclusive, MaxInclusive, MinExclusive, MaxExclusive
       - Pattern
       - MinLength, MaxLength
@@ -151,15 +151,16 @@ Node = Union[URIRef, BNode]
 
 class Uml2OwlConverter:
     """Core converter: given TSV rows (already parsed), produce an OWL ontology,
-    including Choice (union) with optional exclusive semantics (disjointness to choice class),
-    and datatype facets mapped to owl:DatatypeRestriction.
+    including:
+      - UML classes / enumerations / attributes
+      - ISO 20022-style Choice (union) with optional exclusive semantics (disjointness)
+      - Datatype facets mapped to owl:DatatypeRestriction
+      - Reusable named datatypes from Datatypes.tsv
     """
 
     def __init__(self, base_iri: str, prefixes: Dict[str, Namespace] | None = None):
         if not base_iri:
             raise ValueError("base_iri (ontology IRI) is required")
-
-
 
         self.base_iri = base_iri.rstrip("#/")
         self.prefixes = prefixes or {}
@@ -180,6 +181,44 @@ class Uml2OwlConverter:
         self.enum_class_iris: Dict[str, URIRef] = {}
         self.enum_value_iris: Dict[Tuple[str, str], URIRef] = {}
         self.property_iris: Dict[Tuple[str, str], URIRef] = {}
+        self.named_datatypes: Dict[str, URIRef] = {}
+
+    # ---------- Datatypes -------------------------------------------------------
+
+    def add_datatypes(self, rows: List[Dict[str, str]]) -> None:
+        """Process Datatypes.tsv: define named datatypes, with optional facets."""
+        for row in rows:
+            curie = (row.get("Curie") or "").strip()
+            name = (row.get("Name") or "").strip()
+            base = (row.get("BaseDatatype") or "").strip()
+            definition = (row.get("Definition") or "").strip()
+
+            if not base:
+                raise ValueError("Datatypes.tsv row missing BaseDatatype")
+
+            key = curie or name
+            if not key:
+                raise ValueError("Datatypes.tsv row requires Curie or Name")
+
+            dt_iri = _resolve_iri(curie or name, self.prefixes, self.base_iri,
+                                  "datatype", fallback_label=name or curie)
+            base_dt = _datatype_iri(base)
+
+            restriction_node = _build_restricted_datatype(self.graph, base_dt, row)
+
+            g = self.graph
+            g.add((dt_iri, RDF.type, RDFS.Datatype))
+            if name:
+                g.add((dt_iri, RDFS.label, Literal(name)))
+            if definition:
+                g.add((dt_iri, RDFS.comment, Literal(definition)))
+
+            if restriction_node != base_dt:
+                g.add((dt_iri, OWL.equivalentClass, restriction_node))
+
+            self.named_datatypes[key] = dt_iri
+
+    # ---------- Classes / Enums -------------------------------------------------
 
     def add_classes(self, rows: List[Dict[str, str]]) -> None:
         for row in rows:
@@ -190,8 +229,6 @@ class Uml2OwlConverter:
 
             if not (curie or name):
                 raise ValueError("Class row requires at least Curie or Name")
-
-
 
             cls_iri = _resolve_iri(curie or name, self.prefixes,
                                    self.base_iri, "class", fallback_label=name)
@@ -209,8 +246,10 @@ class Uml2OwlConverter:
                 p = p.strip()
                 if p:
                     parent_iri = _resolve_iri(
-                        p, self.prefixes, self.base_iri,
-                        "parent-class", fallback_label=p,
+                        p, self.prefixes,
+                        self.base_iri,
+                        "parent-class",
+                        fallback_label=p,
                     )
                     g.add((cls_iri, RDFS.subClassOf, parent_iri))
 
@@ -222,8 +261,6 @@ class Uml2OwlConverter:
 
             if not (curie or name):
                 raise ValueError("Enumeration row requires Curie or Name")
-
-
 
             enum_iri = _resolve_iri(curie or name, self.prefixes,
                                     self.base_iri, "enumeration", fallback_label=name)
@@ -248,8 +285,6 @@ class Uml2OwlConverter:
                 raise ValueError("EnumerationNamedValues row missing 'Enumeration'")
             if not (curie or name):
                 raise ValueError("EnumerationNamedValues row requires Curie or Name")
-
-
 
             enum_cls_iri = self.enum_class_iris.get(enum_ref)
             if not enum_cls_iri:
@@ -278,13 +313,13 @@ class Uml2OwlConverter:
             if definition:
                 g.add((indiv_iri, RDFS.comment, Literal(definition)))
 
+    # ---------- Attributes ------------------------------------------------------
+
     def add_attributes(self, rows: List[Dict[str, str]]) -> None:
         for row in rows:
             cls_ref = (row.get("Class") or row.get("ClassCurie") or "").strip()
             if not cls_ref:
                 raise ValueError("Attribute row missing 'Class'")
-
-
 
             attr_curie = (row.get("Curie") or "").strip()
             attr_name = (row.get("Name") or "").strip()
@@ -317,6 +352,10 @@ class Uml2OwlConverter:
                 prop_type = OWL.ObjectProperty
                 range_iri = OWL.Thing
                 is_datatype = False
+            elif type_ref in self.named_datatypes:
+                prop_type = OWL.DatatypeProperty
+                range_iri = self.named_datatypes[type_ref]
+                is_datatype = True
             elif _is_xsd_datatype(type_ref):
                 prop_type = OWL.DatatypeProperty
                 base_dt = _datatype_iri(type_ref)
@@ -338,8 +377,6 @@ class Uml2OwlConverter:
                         fallback_label=type_ref,
                     )
 
-
-
             g.add((prop_iri, RDF.type, prop_type))
             g.add((prop_iri, RDFS.domain, domain_iri))
             g.add((prop_iri, RDFS.range, range_iri))
@@ -356,6 +393,8 @@ class Uml2OwlConverter:
                 min_mult,
                 max_mult,
             )
+
+    # ---------- Choice support --------------------------------------------------
 
     def add_choices_from_classes(self, class_rows: List[Dict[str, str]]) -> None:
         """Option A: read ChoiceOf & ChoiceSemantics from Classes.tsv rows."""
@@ -414,7 +453,7 @@ class Uml2OwlConverter:
                 prop, dtype = part.split(":", 1)
                 prop_iri = _resolve_iri(prop, self.prefixes, self.base_iri, "property", fallback_label=prop)
                 restr = BNode()
-                self.graph.add((restr, RDF.type, OWLObject = OWL.Restriction))
+                self.graph.add((restr, RDF.type, OWL.Restriction))
                 self.graph.add((restr, OWL.onProperty, prop_iri))
                 self.graph.add((restr, OWL.someValuesFrom, _datatype_iri(dtype)))
                 disjuncts.append(restr)
@@ -436,6 +475,8 @@ class Uml2OwlConverter:
                 self.graph.add((ax, RDF.type, OWL.AllDisjointClasses))
                 self.graph.add((ax, OWL.members, mem))
                 Collection(self.graph, mem, [choice_cls, disj])
+
+    # ---------- Multiplicity ----------------------------------------------------
 
     def _add_multiplicity_restrictions(
         self,

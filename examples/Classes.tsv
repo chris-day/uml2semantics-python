@@ -7,3 +7,4 @@ iso:ImpliedCcyAmt	ImpliedCurrencyAndAmount		A currency+amount structure with imp
 iso:Qty6Choice	Quantity6Choice		Exclusive choice between quantity choice or original/current quantities	FinancialInstrumentQuantity1Choice|OriginalAndCurrentQuantities1	exclusive
 iso:InterestRate	InterestRate		Interest rate container		
 iso:Schedule1	Schedule1		Schedule container		
+iso:PartyId	PartyIdentification		Party identification container		
