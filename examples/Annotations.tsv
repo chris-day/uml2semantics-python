@@ -1,7 +1,7 @@
 TargetKind	TargetId	PropertyId	Value	Lang	Datatype
 Ontology		iso:release	2025-06		xsd:gYearMonth
 Class	PartyIdentification	rdfs:comment	Party identification container	en	
-Class	PartyIdentification	iso:status	provisionallyRegistered		en
+Class	PartyIdentification	iso:status	provisionallyRegistered	en	
 Datatype	ISO4217CurrencyCode	rdfs:comment	Three-letter ISO 4217 currency code	en	
 Enumeration	CurrencyCode	rdfs:comment	ISO 4217 currency code list	en	
 Individual	iso:GBP	rdfs:comment	Pound Sterling	en	

@@ -1,0 +1,103 @@
+@startuml
+title TSV → OWL 2 Mapping Architecture
+
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+
+package "TSV Inputs" {
+  class ClassesTSV {
+    + Curie
+    + Name
+    + ParentNames
+    + Definition
+    + ChoiceOf
+    + ChoiceSemantics
+  }
+
+  class AttributesTSV {
+    + Class
+    + Curie
+    + Name
+    + ClassEnumOrPrimitiveType
+    + MinMultiplicity
+    + MaxMultiplicity
+    + Facets (...)
+  }
+
+  class DatatypesTSV {
+    + Curie
+    + Name
+    + BaseDatatype
+    + Facets (...)
+  }
+
+  class EnumerationsTSV {
+    + Curie
+    + Name
+    + Definition
+  }
+
+  class EnumValuesTSV {
+    + Enumeration
+    + Curie
+    + Name
+    + Definition
+  }
+
+  class AnnotationPropertiesTSV {
+    + Curie
+    + Name
+    + Definition
+  }
+
+  class AnnotationsTSV {
+    + TargetKind
+    + TargetId
+    + PropertyId
+    + Value
+    + Lang
+    + Datatype
+  }
+}
+
+package "OWL Outputs" {
+  class OWLClass
+  class OWLObjectProperty
+  class OWLDatatypeProperty
+  class OWLDatatype
+  class OWLDatatypeRestriction
+  class OWLAnnotationProperty
+  class OWLIndividual
+
+  class OWLUnion {
+    + owl:unionOf
+    + owl:disjointWith
+  }
+
+  class OWLCardinality {
+    + owl:cardinality
+    + owl:someValuesFrom
+    + owl:maxCardinality
+  }
+}
+
+ClassesTSV --> OWLClass : creates
+ClassesTSV --> OWLUnion : (ChoiceOf, ChoiceSemantics)
+
+AttributesTSV --> OWLObjectProperty : (if object)
+AttributesTSV --> OWLDatatypeProperty : (if datatype)
+AttributesTSV --> OWLCardinality
+
+DatatypesTSV --> OWLDatatype
+DatatypesTSV --> OWLDatatypeRestriction : (facets)
+
+EnumerationsTSV --> OWLClass : (enum as class)
+EnumValuesTSV --> OWLIndividual
+
+AnnotationPropertiesTSV --> OWLAnnotationProperty
+AnnotationsTSV --> OWLClass : annotate
+AnnotationsTSV --> OWLDatatype : annotate
+AnnotationsTSV --> OWLObjectProperty : annotate
+AnnotationsTSV --> OWLIndividual : annotate
+
+@enduml
