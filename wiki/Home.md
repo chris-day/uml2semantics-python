@@ -16,7 +16,7 @@ This project converts UML-style TSV specifications into **OWL 2 ontologies**, su
 graph TD
   A[TSV Inputs] --> B[uml2semantics CLI]
   B --> C[OWL 2 Ontology]
-  B --> D[Reasoner / Tools (Protégé, SHACL, ...)]
+  B --> D[Reasoner / Tools (Protege, SHACL, etc.)]
 ```
 
 ---
