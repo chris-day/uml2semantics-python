@@ -1,9 +1,7 @@
 # Architecture
 
-Mermaid and image-based architecture documentation.
-
 ```mermaid
-graph TD; TSV-->CLI-->OWL;
+graph TD
+  TSV[TSV Inputs] --> CLI[uml2semantics CLI]
+  CLI --> OWL[OWL 2 Ontology]
 ```
-
-![uml2semantics Architecture](uml2semantics-architecture.png)
