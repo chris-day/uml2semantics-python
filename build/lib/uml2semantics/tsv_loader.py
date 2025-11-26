@@ -1,161 +1,151 @@
-
-from __future__ import annotations
-
 import csv
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
-
+from typing import Optional
 from .model import (
     Model,
-    UmlAttribute,
     UmlClass,
-    UmlDatatype,
-    UmlEnumLiteral,
     UmlEnumeration,
+    UmlEnumLiteral,
+    UmlDatatype,
+    UmlAttribute,
 )
 
 
-def _read_tsv(path: Optional[Path]) -> Iterable[Dict[str, str]]:
-    if path is None:
-        return []
-    if not path.exists():
-        raise FileNotFoundError(path)
-    with path.open("r", encoding="utf-8") as f:
+def _read_tsv(path: Path):
+    with path.open(encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f, delimiter="\t")
         for row in reader:
-            # Normalise keys (strip BOM / whitespace)
-            cleaned = {k.strip(): (v.strip() if isinstance(v, str) else v) for k, v in row.items()}
-            yield cleaned
+            yield {(k or "").strip(): (v or "").strip() for k, v in row.items()}
 
 
-def _b(s: Optional[str]) -> Optional[bool]:
-    if s is None:
-        return None
-    v = s.strip().lower()
-    if v in {"true", "t", "yes", "y", "1"}:
-        return True
-    if v in {"false", "f", "no", "n", "0"}:
-        return False
-    return None
-
-
-def _i(s: Optional[str]) -> Optional[int]:
-    if s is None:
-        return None
-    s = s.strip()
-    if not s or s == "*":
+def _to_int(value: str) -> Optional[int]:
+    if not value:
         return None
     try:
-        return int(s)
+        return int(value)
     except ValueError:
         return None
 
 
 def load_model(
-    class_tsv: Path,
-    attribute_tsv: Optional[Path] = None,
-    enumeration_tsv: Optional[Path] = None,
-    enum_individuals_tsv: Optional[Path] = None,
+    classes_tsv: Optional[Path] = None,
+    enums_tsv: Optional[Path] = None,
+    enum_literals_tsv: Optional[Path] = None,
     datatypes_tsv: Optional[Path] = None,
+    attributes_tsv: Optional[Path] = None,
 ) -> Model:
-    classes: Dict[str, UmlClass] = {}
-    attributes: List[UmlAttribute] = []
-    enumerations: Dict[str, UmlEnumeration] = {}
-    enum_literals: List[UmlEnumLiteral] = []
-    datatypes: Dict[str, UmlDatatype] = {}
+    model = Model()
 
-    # --- Classes ---
-    for row in _read_tsv(class_tsv):
-        name = row.get("name") or row.get("Name")
-        iri = row.get("iri") or row.get("IRI") or row.get("Iri")
-        if not name or not iri:
-            continue
-        is_abstract = _b(row.get("isAbstract") or row.get("Abstract") or row.get("is_abstract")) or False
-        super_classes_str = row.get("superClass") or row.get("SuperClass") or row.get("SuperClasses") or ""
-        super_classes = [s.strip() for s in super_classes_str.split(",") if s.strip()]
-        definition = row.get("definition") or row.get("Definition")
-        classes[name] = UmlClass(
-            name=name,
-            iri=iri,
-            definition=definition,
-            is_abstract=is_abstract,
-            super_classes=super_classes,
-        )
-
-    # --- Attributes ---
-    if attribute_tsv:
-        for row in _read_tsv(attribute_tsv):
-            owner = row.get("class") or row.get("Class") or row.get("Owner")
-            name = row.get("name") or row.get("Name")
-            type_name = row.get("type") or row.get("Type") or row.get("ClassEnumOrPrimitiveType")
-            if not owner or not name or not type_name:
-                continue
-            min_card = _i(row.get("minCardinality") or row.get("MinMultiplicity") or row.get("min"))
-            max_card = _i(row.get("maxCardinality") or row.get("MaxMultiplicity") or row.get("max"))
-            definition = row.get("definition") or row.get("Definition")
-            attributes.append(
-                UmlAttribute(
-                    owner=owner,
-                    name=name,
-                    type_name=type_name,
-                    min_cardinality=min_card,
-                    max_cardinality=max_card,
-                    definition=definition,
-                )
-            )
-
-    # --- Enumerations ---
-    if enumeration_tsv:
-        for row in _read_tsv(enumeration_tsv):
-            name = row.get("name") or row.get("Name")
-            iri = row.get("iri") or row.get("IRI") or row.get("Iri")
-            if not name or not iri:
-                continue
-            definition = row.get("definition") or row.get("Definition")
-            enumerations[name] = UmlEnumeration(name=name, iri=iri, definition=definition)
-
-    # --- Enum literals ---
-    if enum_individuals_tsv:
-        for row in _read_tsv(enum_individuals_tsv):
-            enumeration = row.get("enumeration") or row.get("Enumeration")
-            name = row.get("name") or row.get("Name")
-            iri = row.get("iri") or row.get("IRI") or row.get("Iri")
-            if not enumeration or not name or not iri:
-                continue
-            definition = row.get("definition") or row.get("Definition")
-            enum_literals.append(
-                UmlEnumLiteral(
-                    enumeration=enumeration,
-                    name=name,
-                    iri=iri,
-                    definition=definition,
-                )
-            )
-
-    # --- Datatypes ---
-    if datatypes_tsv:
-        for row in _read_tsv(datatypes_tsv):
-            name = row.get("name") or row.get("Name")
-            iri = row.get("iri") or row.get("IRI") or row.get("Iri")
-            base_iri = row.get("baseIri") or row.get("BaseIRI") or row.get("Base")
-            if not name or not iri:
-                continue
-            dt = UmlDatatype(
+    if classes_tsv:
+        for r in _read_tsv(classes_tsv):
+            curie = r.get("Curie") or None
+            name = r.get("Name") or None
+            definition = r.get("Definition") or None
+            parents = r.get("ParentNames") or ""
+            parent_curie_list = [p.strip() for p in parents.split("|") if p.strip()]
+            is_abstract = (r.get("IsAbstract") or "").lower() in ("true", "1", "yes", "y")
+            choice_of_raw = r.get("ChoiceOf") or ""
+            choice_of = [c.strip() for c in choice_of_raw.split("|") if c.strip()]
+            choice_semantics = r.get("ChoiceSemantics") or None
+            cls = UmlClass(
+                curie=curie,
                 name=name,
-                iri=iri,
-                base_iri=base_iri,
+                definition=definition,
+                parent_curie_list=parent_curie_list,
+                is_abstract=is_abstract,
+                choice_of=choice_of,
+                choice_semantics=choice_semantics,
             )
-            # Optional facet columns (keep naming tolerant)
-            dt.min_inclusive = row.get("minInclusive") or row.get("MinInclusive")
-            dt.max_inclusive = row.get("maxInclusive") or row.get("MaxInclusive")
-            dt.min_length = _i(row.get("minLength") or row.get("MinLength"))
-            dt.max_length = _i(row.get("maxLength") or row.get("MaxLength"))
-            datatypes[name] = dt
+            key = curie or name
+            if key:
+                model.classes[key] = cls
 
-    return Model(
-        classes=classes,
-        attributes=attributes,
-        enumerations=enumerations,
-        enum_literals=enum_literals,
-        datatypes=datatypes,
-    )
+    if enums_tsv:
+        for r in _read_tsv(enums_tsv):
+            curie = r.get("Curie") or None
+            name = r.get("Name") or None
+            definition = r.get("Definition") or None
+            en = UmlEnumeration(curie=curie, name=name, definition=definition)
+            key = curie or name
+            if key:
+                model.enumerations[key] = en
+
+    if enum_literals_tsv:
+        for r in _read_tsv(enum_literals_tsv):
+            enum_ref = r.get("Enumeration") or ""
+            curie = r.get("Curie") or None
+            name = r.get("Name") or None
+            definition = r.get("Definition") or None
+            if enum_ref:
+                lit = UmlEnumLiteral(
+                    enumeration=enum_ref,
+                    curie=curie,
+                    name=name,
+                    definition=definition,
+                )
+                model.enum_literals.append(lit)
+
+    if datatypes_tsv:
+        for r in _read_tsv(datatypes_tsv):
+            curie = r.get("Curie") or None
+            name = r.get("Name") or None
+            base = r.get("BaseDatatype") or ""
+            definition = r.get("Definition") or None
+            dt = UmlDatatype(
+                curie=curie,
+                name=name,
+                base_datatype=base,
+                definition=definition,
+                pattern=r.get("Pattern") or None,
+                min_length=_to_int(r.get("MinLength") or ""),
+                max_length=_to_int(r.get("MaxLength") or ""),
+                min_inclusive=r.get("MinInclusive") or None,
+                max_inclusive=r.get("MaxInclusive") or None,
+                min_exclusive=r.get("MinExclusive") or None,
+                max_exclusive=r.get("MaxExclusive") or None,
+                total_digits=_to_int(r.get("TotalDigits") or ""),
+                fraction_digits=_to_int(r.get("FractionDigits") or ""),
+            )
+            key = curie or name
+            if key:
+                model.datatypes[key] = dt
+
+    if attributes_tsv:
+        for r in _read_tsv(attributes_tsv):
+            class_ref = r.get("Class") or ""
+            if not class_ref:
+                continue
+            curie = r.get("Curie") or None
+            name = r.get("Name") or None
+            if not name:
+                raise ValueError(f"Attribute for class '{class_ref}' with CURIE '{curie}' is missing a Name; TSV Name must be populated.")
+            type_ref = r.get("ClassEnumOrPrimitiveType") or ""
+            definition = r.get("Definition") or None
+            min_mult = r.get("MinMultiplicity") or ""
+            max_mult = r.get("MaxMultiplicity") or ""
+            min_card = _to_int(min_mult)
+            if max_mult == "*":
+                max_card = "*"
+            else:
+                max_card = _to_int(max_mult)
+            attr = UmlAttribute(
+                class_curie=class_ref,
+                curie=curie,
+                name=name,
+                type_curie_or_primitive=type_ref,
+                min_cardinality=min_card,
+                max_cardinality=max_card,
+                definition=definition,
+                pattern=r.get("Pattern") or None,
+                min_length=_to_int(r.get("MinLength") or ""),
+                max_length=_to_int(r.get("MaxLength") or ""),
+                min_inclusive=r.get("MinInclusive") or None,
+                max_inclusive=r.get("MaxInclusive") or None,
+                min_exclusive=r.get("MinExclusive") or None,
+                max_exclusive=r.get("MaxExclusive") or None,
+                total_digits=_to_int(r.get("TotalDigits") or ""),
+                fraction_digits=_to_int(r.get("FractionDigits") or ""),
+            )
+            model.attributes.append(attr)
+
+    return model

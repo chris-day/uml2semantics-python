@@ -2,10 +2,10 @@ LICENSE
 README.md
 pyproject.toml
 src/uml2semantics/__init__.py
-src/uml2semantics/__main__.py
 src/uml2semantics/cli.py
-src/uml2semantics/converter.py
-src/uml2semantics/tsv.py
+src/uml2semantics/model.py
+src/uml2semantics/ontology_builder.py
+src/uml2semantics/tsv_loader.py
 src/uml2semantics.egg-info/PKG-INFO
 src/uml2semantics.egg-info/SOURCES.txt
 src/uml2semantics.egg-info/dependency_links.txt

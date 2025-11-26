@@ -1,60 +1,74 @@
-
-from __future__ import annotations
-
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Optional, List, Dict, Union
 
 
 @dataclass
 class UmlClass:
-    name: str
-    iri: str
+    curie: Optional[str]
+    name: Optional[str]
     definition: Optional[str] = None
+    parent_curie_list: List[str] = field(default_factory=list)
     is_abstract: bool = False
-    super_classes: List[str] = field(default_factory=list)
-
-
-@dataclass
-class UmlAttribute:
-    owner: str
-    name: str
-    type_name: str
-    min_cardinality: Optional[int]
-    max_cardinality: Optional[int]
-    definition: Optional[str] = None
+    choice_of: List[str] = field(default_factory=list)
+    choice_semantics: Optional[str] = None
 
 
 @dataclass
 class UmlEnumeration:
-    name: str
-    iri: str
+    curie: Optional[str]
+    name: Optional[str]
     definition: Optional[str] = None
 
 
 @dataclass
 class UmlEnumLiteral:
     enumeration: str
-    name: str
-    iri: str
+    curie: Optional[str]
+    name: Optional[str]
     definition: Optional[str] = None
 
 
 @dataclass
 class UmlDatatype:
-    name: str
-    iri: str
-    base_iri: Optional[str] = None
-    # Facets are kept simple; if present, they are emitted as OWL 2 datatype restrictions.
-    min_inclusive: Optional[str] = None
-    max_inclusive: Optional[str] = None
+    curie: Optional[str]
+    name: Optional[str]
+    base_datatype: str
+    definition: Optional[str] = None
+    pattern: Optional[str] = None
     min_length: Optional[int] = None
     max_length: Optional[int] = None
+    min_inclusive: Optional[str] = None
+    max_inclusive: Optional[str] = None
+    min_exclusive: Optional[str] = None
+    max_exclusive: Optional[str] = None
+    total_digits: Optional[int] = None
+    fraction_digits: Optional[int] = None
+
+
+@dataclass
+class UmlAttribute:
+    class_curie: str
+    curie: Optional[str]
+    name: Optional[str]
+    type_curie_or_primitive: str
+    min_cardinality: Optional[int] = None
+    max_cardinality: Optional[Union[int, str]] = None
+    definition: Optional[str] = None
+    pattern: Optional[str] = None
+    min_length: Optional[int] = None
+    max_length: Optional[int] = None
+    min_inclusive: Optional[str] = None
+    max_inclusive: Optional[str] = None
+    min_exclusive: Optional[str] = None
+    max_exclusive: Optional[str] = None
+    total_digits: Optional[int] = None
+    fraction_digits: Optional[int] = None
 
 
 @dataclass
 class Model:
-    classes: Dict[str, UmlClass]
-    attributes: List[UmlAttribute]
-    enumerations: Dict[str, UmlEnumeration]
-    enum_literals: List[UmlEnumLiteral]
-    datatypes: Dict[str, UmlDatatype]
+    classes: Dict[str, UmlClass] = field(default_factory=dict)
+    enumerations: Dict[str, UmlEnumeration] = field(default_factory=dict)
+    enum_literals: List[UmlEnumLiteral] = field(default_factory=list)
+    datatypes: Dict[str, UmlDatatype] = field(default_factory=dict)
+    attributes: List[UmlAttribute] = field(default_factory=list)

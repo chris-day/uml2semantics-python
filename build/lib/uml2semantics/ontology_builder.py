@@ -1,244 +1,319 @@
-
-from __future__ import annotations
-
-from pathlib import Path
-from typing import Dict, Optional
-
-from rdflib import BNode, Graph, Literal, Namespace, RDF, RDFS, OWL, URIRef
-from rdflib.namespace import XSD
-
-from .model import Model, UmlDatatype
+from typing import Dict, List, Tuple
+from rdflib import Graph, Namespace, URIRef, BNode, Literal
+from rdflib.namespace import RDF, RDFS, OWL, XSD
+from .model import Model, UmlDatatype, UmlAttribute
 
 
 def parse_prefixes(prefix_str: str) -> Dict[str, str]:
-    """
-    Parse a prefix string of the form:
-
-        'iso20022:http://iso20022.org/iso20022/,xsd:http://www.w3.org/2001/XMLSchema#'
-
-    into a mapping {"iso20022": "http://iso20022.org/iso20022/", ...}.
-    """
-    result: Dict[str, str] = {}
+    prefix_map: Dict[str, str] = {}
     if not prefix_str:
-        return result
-    for part in prefix_str.split(","):
-        part = part.strip()
-        if not part:
+        return prefix_map
+    parts = [p.strip() for p in prefix_str.split(";") if p.strip()]
+    for part in parts:
+        if "=" not in part:
             continue
-        if ":" not in part:
-            continue
-        pref, iri = part.split(":", 1)
-        pref = pref.strip()
-        iri = iri.strip()
-        if pref and iri:
-            result[pref] = iri
-    return result
+        pfx, iri = part.split("=", 1)
+        prefix_map[pfx.strip()] = iri.strip()
+    return prefix_map
 
 
-def curie_to_iri(curie: str, prefixes: Dict[str, str]) -> Optional[URIRef]:
-    if ":" not in curie:
-        return None
-    pref, local = curie.split(":", 1)
-    base = prefixes.get(pref)
-    if not base:
-        return None
-    return URIRef(base + local)
+def _expand(curie_or_iri: str, prefix_map: Dict[str, str]) -> URIRef:
+    if ":" in curie_or_iri:
+        pfx, local = curie_or_iri.split(":", 1)
+        if pfx in prefix_map:
+            return URIRef(prefix_map[pfx] + local)
+    return URIRef(curie_or_iri)
 
 
-def _datatype_from_name(type_name: str, model: Model, prefixes: Dict[str, str]) -> Optional[URIRef]:
-    # 1) Explicit datatypes.tsv mapping
-    dt: Optional[UmlDatatype] = model.datatypes.get(type_name)
-    if dt is not None:
-        return URIRef(dt.iri)
-
-    # 2) CURIE directly resolvable via prefixes
-    iri = curie_to_iri(type_name, prefixes)
-    if iri is not None:
-        return iri
-
-    # 3) Fallback: try xsd:*
-    if not type_name.startswith("xsd:"):
-        return None
-    local = type_name.split(":", 1)[1]
-    if hasattr(XSD, local):
-        return getattr(XSD, local)
-    return None
+def _make_rdf_list(g: Graph, elements: List[URIRef]) -> BNode:
+    if not elements:
+        return RDF.nil  # type: ignore
+    head = BNode()
+    current = head
+    for i, el in enumerate(elements):
+        g.add((current, RDF.first, el))
+        if i == len(elements) - 1:
+            g.add((current, RDF.rest, RDF.nil))
+        else:
+            nxt = BNode()
+            g.add((current, RDF.rest, nxt))
+            current = nxt
+    return head
 
 
-def build_ontology(
-    model: Model,
-    ontology_iri: str,
-    prefix_str: str,
-) -> Graph:
+def _facet_nodes_for_datatype(
+    g: Graph,
+    base_uri: URIRef,
+    pattern: str = None,
+    min_length: int = None,
+    max_length: int = None,
+    min_inclusive: str = None,
+    max_inclusive: str = None,
+    min_exclusive: str = None,
+    max_exclusive: str = None,
+    total_digits: int = None,
+    fraction_digits: int = None,
+) -> List[BNode]:
+    nodes: List[BNode] = []
+    if pattern:
+        n = BNode()
+        g.add((n, XSD.pattern, Literal(pattern)))
+        nodes.append(n)
+    if min_length is not None:
+        n = BNode()
+        g.add((n, XSD.minLength, Literal(min_length, datatype=XSD.integer)))
+        nodes.append(n)
+    if max_length is not None:
+        n = BNode()
+        g.add((n, XSD.maxLength, Literal(max_length, datatype=XSD.integer)))
+        nodes.append(n)
+    if min_inclusive is not None:
+        n = BNode()
+        g.add((n, XSD.minInclusive, Literal(min_inclusive, datatype=base_uri)))
+        nodes.append(n)
+    if max_inclusive is not None:
+        n = BNode()
+        g.add((n, XSD.maxInclusive, Literal(max_inclusive, datatype=base_uri)))
+        nodes.append(n)
+    if min_exclusive is not None:
+        n = BNode()
+        g.add((n, XSD.minExclusive, Literal(min_exclusive, datatype=base_uri)))
+        nodes.append(n)
+    if max_exclusive is not None:
+        n = BNode()
+        g.add((n, XSD.maxExclusive, Literal(max_exclusive, datatype=base_uri)))
+        nodes.append(n)
+    if total_digits is not None:
+        n = BNode()
+        g.add((n, XSD.totalDigits, Literal(total_digits, datatype=XSD.integer)))
+        nodes.append(n)
+    if fraction_digits is not None:
+        n = BNode()
+        g.add((n, XSD.fractionDigits, Literal(fraction_digits, datatype=XSD.integer)))
+        nodes.append(n)
+    return nodes
+
+
+def _base_datatype_iri(base: str, prefix_map: Dict[str, str]) -> URIRef:
+    if ":" in base:
+        pfx, local = base.split(":", 1)
+        if pfx == "xsd":
+            return getattr(XSD, local)
+        if pfx in prefix_map:
+            return URIRef(prefix_map[pfx] + local)
+    return URIRef(base)
+
+
+def _emit_named_datatype(g: Graph, dt: UmlDatatype, prefix_map: Dict[str, str]) -> None:
+    dt_ident = dt.curie or dt.name
+    if not dt_ident:
+        return
+    dt_uri = _expand(dt_ident, prefix_map)
+    g.add((dt_uri, RDF.type, RDFS.Datatype))
+    if dt.name:
+        g.add((dt_uri, RDFS.label, Literal(dt.name)))
+    if dt.definition:
+        g.add((dt_uri, RDFS.comment, Literal(dt.definition)))
+    has_facets = any([
+        dt.pattern,
+        dt.min_length is not None,
+        dt.max_length is not None,
+        dt.min_inclusive is not None,
+        dt.max_inclusive is not None,
+        dt.min_exclusive is not None,
+        dt.max_exclusive is not None,
+        dt.total_digits is not None,
+        dt.fraction_digits is not None,
+    ])
+    if not has_facets:
+        return
+    restr_dt = BNode()
+    g.add((restr_dt, RDF.type, RDFS.Datatype))
+    base_uri = _base_datatype_iri(dt.base_datatype, prefix_map)
+    g.add((restr_dt, OWL.onDatatype, base_uri))
+    facet_nodes = _facet_nodes_for_datatype(
+        g,
+        base_uri=base_uri,
+        pattern=dt.pattern,
+        min_length=dt.min_length,
+        max_length=dt.max_length,
+        min_inclusive=dt.min_inclusive,
+        max_inclusive=dt.max_inclusive,
+        min_exclusive=dt.min_exclusive,
+        max_exclusive=dt.max_exclusive,
+        total_digits=dt.total_digits,
+        fraction_digits=dt.fraction_digits,
+    )
+    if facet_nodes:
+        lst = _make_rdf_list(g, facet_nodes)
+        g.add((restr_dt, OWL.withRestrictions, lst))
+    g.add((dt_uri, OWL.equivalentClass, restr_dt))
+
+
+def _emit_inline_datatype_range(g: Graph, attr: UmlAttribute, prefix_map: Dict[str, str]) -> URIRef:
+    t = attr.type_curie_or_primitive
+    if t in prefix_map or ":" in t:
+        base_uri = _base_datatype_iri(t, prefix_map)
+    else:
+        base_uri = XSD.string
+    restr_dt = BNode()
+    g.add((restr_dt, RDF.type, RDFS.Datatype))
+    g.add((restr_dt, OWL.onDatatype, base_uri))
+    facet_nodes = _facet_nodes_for_datatype(
+        g,
+        base_uri=base_uri,
+        pattern=attr.pattern,
+        min_length=attr.min_length,
+        max_length=attr.max_length,
+        min_inclusive=attr.min_inclusive,
+        max_inclusive=attr.max_inclusive,
+        min_exclusive=attr.min_exclusive,
+        max_exclusive=attr.max_exclusive,
+        total_digits=attr.total_digits,
+        fraction_digits=attr.fraction_digits,
+    )
+    if facet_nodes:
+        lst = _make_rdf_list(g, facet_nodes)
+        g.add((restr_dt, OWL.withRestrictions, lst))
+    return restr_dt
+
+
+def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
     g = Graph()
-
-    prefixes = parse_prefixes(prefix_str)
-    for pfx, iri in prefixes.items():
+    prefix_map = parse_prefixes(prefix_str)
+    for pfx, iri in prefix_map.items():
         g.bind(pfx, Namespace(iri))
-    g.bind("rdf", RDF)
-    g.bind("rdfs", RDFS)
-    g.bind("owl", OWL)
-    g.bind("xsd", XSD)
+    ont_uri = URIRef(ontology_iri)
+    g.add((ont_uri, RDF.type, OWL.Ontology))
 
-    ont_iri_ref = URIRef(ontology_iri)
-    g.add((ont_iri_ref, RDF.type, OWL.Ontology))
+    # Classes
+    for cls in model.classes.values():
+        ident = cls.curie or cls.name
+        if not ident:
+            continue
+        uri = _expand(ident, prefix_map)
+        g.add((uri, RDF.type, OWL.Class))
+        if cls.name:
+            g.add((uri, RDFS.label, Literal(cls.name)))
+        if cls.definition:
+            g.add((uri, RDFS.comment, Literal(cls.definition)))
+        for parent in cls.parent_curie_list:
+            g.add((uri, RDFS.subClassOf, _expand(parent, prefix_map)))
+        if cls.choice_of:
+            members = [_expand(c, prefix_map) for c in cls.choice_of]
+            union_class = BNode()
+            g.add((union_class, RDF.type, OWL.Class))
+            lst = _make_rdf_list(g, members)
+            g.add((union_class, OWL.unionOf, lst))
+            g.add((uri, RDFS.subClassOf, union_class))
+            if cls.choice_semantics and cls.choice_semantics.lower().startswith("exclusive"):
+                for m in members:
+                    g.add((uri, OWL.disjointWith, m))
 
-    # Helper for class IRI lookup by name
-    class_iris: Dict[str, URIRef] = {name: URIRef(uc.iri) for name, uc in model.classes.items()}
-    enum_iris: Dict[str, URIRef] = {name: URIRef(e.iri) for name, e in model.enumerations.items()}
+    # Enumerations
+    for en in model.enumerations.values():
+        ident = en.curie or en.name
+        if not ident:
+            continue
+        uri = _expand(ident, prefix_map)
+        g.add((uri, RDF.type, OWL.Class))
+        if en.name:
+            g.add((uri, RDFS.label, Literal(en.name)))
+        if en.definition:
+            g.add((uri, RDFS.comment, Literal(en.definition)))
 
-    # --- Classes ---
-    for c in model.classes.values():
-        c_iri = URIRef(c.iri)
-        g.add((c_iri, RDF.type, OWL.Class))
-        g.add((c_iri, RDFS.label, Literal(c.name)))
-        if c.definition:
-            g.add((c_iri, RDFS.comment, Literal(c.definition)))
-        if c.is_abstract:
-            # Use an OWL 2 annotation for abstractness.
-            g.add((c_iri, OWL.deprecated, Literal(True)))
-        for sc_name in c.super_classes:
-            sc_iri = class_iris.get(sc_name)
-            if sc_iri:
-                g.add((c_iri, RDFS.subClassOf, sc_iri))
-
-    # --- Enumerations as classes ---
-    for e in model.enumerations.values():
-        e_iri = URIRef(e.iri)
-        g.add((e_iri, RDF.type, OWL.Class))
-        g.add((e_iri, RDFS.label, Literal(e.name)))
-        if e.definition:
-            g.add((e_iri, RDFS.comment, Literal(e.definition)))
-
-    # --- Enum literals as individuals ---
+    # Enumeration literals
     for lit in model.enum_literals:
-        enum_iri = enum_iris.get(lit.enumeration)
-        if not enum_iri:
+        enum_uri = _expand(lit.enumeration, prefix_map)
+        inst_ident = lit.curie or lit.name
+        if not inst_ident:
             continue
-        lit_iri = URIRef(lit.iri)
-        g.add((lit_iri, RDF.type, enum_iri))
-        g.add((lit_iri, RDFS.label, Literal(lit.name)))
+        inst_uri = _expand(inst_ident, prefix_map)
+        g.add((inst_uri, RDF.type, enum_uri))
+        if lit.name:
+            g.add((inst_uri, RDFS.label, Literal(lit.name)))
         if lit.definition:
-            g.add((lit_iri, RDFS.comment, Literal(lit.definition)))
+            g.add((inst_uri, RDFS.comment, Literal(lit.definition)))
 
-    # --- Attributes → OWL 2 object / datatype properties + restrictions ---
-    for attr in model.attributes:
-        owner_iri = class_iris.get(attr.owner) or enum_iris.get(attr.owner)
-        if owner_iri is None:
-            continue
-
-        # Decide property kind: object vs datatype
-        range_class_iri = class_iris.get(attr.type_name) or enum_iris.get(attr.type_name)
-        range_dt_iri = _datatype_from_name(attr.type_name, model, prefixes)
-
-        if range_class_iri is not None:
-            prop_type = OWL.ObjectProperty
-            range_iri = range_class_iri
-        else:
-            prop_type = OWL.DatatypeProperty
-            range_iri = range_dt_iri or XSD.string  # robust fallback
-
-        # Property IRI: reuse CURIE if possible, otherwise mint from owner + name.
-        prop_iri = curie_to_iri(attr.name, prefixes)
-        if prop_iri is None:
-            # Mint a local IRI under the ontology IRI
-            prop_iri = URIRef(f"{ontology_iri}#{attr.owner}.{attr.name}")
-
-        g.add((prop_iri, RDF.type, prop_type))
-        g.add((prop_iri, RDFS.label, Literal(attr.name)))
-        if attr.definition:
-            g.add((prop_iri, RDFS.comment, Literal(attr.definition)))
-
-        # Domain & range
-        g.add((prop_iri, RDFS.domain, owner_iri))
-        if range_iri is not None:
-            g.add((prop_iri, RDFS.range, range_iri))
-
-        # OWL 2 cardinality restrictions: subclass axioms on the owner
-        min_card = attr.min_cardinality
-        max_card = attr.max_cardinality
-
-        def restriction_node(cardinality_kind: str, value: int):
-            r = BNode()
-            g.add((r, RDF.type, OWL.Restriction))
-            g.add((r, OWL.onProperty, prop_iri))
-            lit = Literal(value, datatype=XSD.nonNegativeInteger)
-            if prop_type is OWL.ObjectProperty:
-                if cardinality_kind == "exact":
-                    g.add((r, OWL.qualifiedCardinality, lit))
-                elif cardinality_kind == "min":
-                    g.add((r, OWL.minQualifiedCardinality, lit))
-                elif cardinality_kind == "max":
-                    g.add((r, OWL.maxQualifiedCardinality, lit))
-                g.add((r, OWL.onClass, range_iri or OWL.Thing))
-            else:
-                if cardinality_kind == "exact":
-                    g.add((r, OWL.qualifiedCardinality, lit))
-                elif cardinality_kind == "min":
-                    g.add((r, OWL.minQualifiedCardinality, lit))
-                elif cardinality_kind == "max":
-                    g.add((r, OWL.maxQualifiedCardinality, lit))
-                g.add((r, OWL.onDataRange, range_iri or RDFS.Literal))
-            return r
-
-        if min_card is not None and max_card is not None and min_card == max_card:
-            r = restriction_node("exact", min_card)
-            g.add((owner_iri, RDFS.subClassOf, r))
-        else:
-            if min_card is not None:
-                r = restriction_node("min", min_card)
-                g.add((owner_iri, RDFS.subClassOf, r))
-            if max_card is not None:
-                r = restriction_node("max", max_card)
-                g.add((owner_iri, RDFS.subClassOf, r))
-
-    # --- Datatype declarations and optional OWL 2 datatype restrictions ---
+    # Datatypes
     for dt in model.datatypes.values():
-        dt_iri = URIRef(dt.iri)
-        g.add((dt_iri, RDF.type, RDFS.Datatype))
-        if dt.base_iri:
-            # Base datatype with optional facets using OWL 2 syntax
-            base = URIRef(dt.base_iri)
-            base_restr = BNode()
-            g.add((dt_iri, OWL.equivalentClass, base_restr))
-            g.add((base_restr, RDF.type, RDFS.Datatype))
-            g.add((base_restr, OWL.onDatatype, base))
+        _emit_named_datatype(g, dt, prefix_map)
 
-            from rdflib.collection import Collection
+    # Attributes → properties
+    from .model import UmlAttribute  # avoid circular
 
-            facet_list = BNode()
-            g.add((base_restr, OWL.withRestrictions, facet_list))
+    restrictions_by_domain: Dict[URIRef, List[URIRef]] = {}
 
-            members = []
-            if dt.min_inclusive is not None:
-                f = BNode()
-                g.add((f, XSD.minInclusive, Literal(dt.min_inclusive)))
-                members.append(f)
-            if dt.max_inclusive is not None:
-                f = BNode()
-                g.add((f, XSD.maxInclusive, Literal(dt.max_inclusive)))
-                members.append(f)
-            if dt.min_length is not None:
-                f = BNode()
-                g.add((f, XSD.minLength, Literal(dt.min_length, datatype=XSD.nonNegativeInteger)))
-                members.append(f)
-            if dt.max_length is not None:
-                f = BNode()
-                g.add((f, XSD.maxLength, Literal(dt.max_length, datatype=XSD.nonNegativeInteger)))
-                members.append(f)
+    for attr in model.attributes:
+        domain_uri = _expand(attr.class_curie, prefix_map)
+        prop_ident = attr.curie or attr.name
+        if not prop_ident:
+            continue
+        prop_uri = _expand(prop_ident, prefix_map)
+        target = attr.type_curie_or_primitive
+        is_object = target in model.classes or target in model.enumerations
+        if is_object:
+            g.add((prop_uri, RDF.type, OWL.ObjectProperty))
+            g.add((prop_uri, RDFS.domain, domain_uri))
+            g.add((prop_uri, RDFS.range, _expand(target, prefix_map)))
+        else:
+            g.add((prop_uri, RDF.type, OWL.DatatypeProperty))
+            g.add((prop_uri, RDFS.domain, domain_uri))
+            has_inline = any([
+                attr.pattern,
+                attr.min_length is not None,
+                attr.max_length is not None,
+                attr.min_inclusive is not None,
+                attr.max_inclusive is not None,
+                attr.min_exclusive is not None,
+                attr.max_exclusive is not None,
+                attr.total_digits is not None,
+                attr.fraction_digits is not None,
+            ])
+            if has_inline:
+                range_dt = _emit_inline_datatype_range(g, attr, prefix_map)
+                g.add((prop_uri, RDFS.range, range_dt))
+            else:
+                if target in model.datatypes:
+                    g.add((prop_uri, RDFS.range, _expand(target, prefix_map)))
+                else:
+                    g.add((prop_uri, RDFS.range, _base_datatype_iri(target, prefix_map)))
 
-            Collection(g, facet_list, members)
+        # rdfs:label from TSV Name (always populated; loader enforces)
+        if attr.name:
+            g.add((prop_uri, RDFS.label, Literal(attr.name)))
+
+        if attr.definition:
+            g.add((prop_uri, RDFS.comment, Literal(attr.definition)))
+
+        if attr.min_cardinality is not None or attr.max_cardinality is not None:
+            restr = BNode()
+            g.add((restr, RDF.type, OWL.Restriction))
+            g.add((restr, OWL.onProperty, prop_uri))
+            if (
+                attr.min_cardinality is not None
+                and attr.max_cardinality is not None
+                and attr.max_cardinality != "*"
+                and attr.min_cardinality == attr.max_cardinality
+            ):
+                g.add((restr, OWL.cardinality, Literal(attr.min_cardinality, datatype=XSD.nonNegativeInteger)))
+            else:
+                if attr.min_cardinality is not None:
+                    g.add((restr, OWL.minCardinality, Literal(attr.min_cardinality, datatype=XSD.nonNegativeInteger)))
+                if attr.max_cardinality not in (None, "*"):
+                    g.add((restr, OWL.maxCardinality, Literal(attr.max_cardinality, datatype=XSD.nonNegativeInteger)))
+            restrictions_by_domain.setdefault(domain_uri, []).append(restr)
+
+    for domain_uri, restrs in restrictions_by_domain.items():
+        for r in restrs:
+            g.add((domain_uri, RDFS.subClassOf, r))
 
     return g
 
 
-def serialise_ontology(
-    model: Model,
-    ontology_iri: str,
-    prefix_str: str,
-    output: Path,
-    format: str = "xml",
-) -> None:
-    g = build_ontology(model=model, ontology_iri=ontology_iri, prefix_str=prefix_str)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    g.serialize(destination=str(output), format=format)
+def serialise_ontology(model: Model, ontology_iri: str, prefix_str: str, output_path, format: str = "xml", xml_base: str = None) -> None:
+    g = build_ontology(model, ontology_iri, prefix_str)
+    if xml_base and format == "xml":
+        g.serialize(destination=str(output_path), format=format, xml_base=xml_base)
+    else:
+        g.serialize(destination=str(output_path), format=format)
