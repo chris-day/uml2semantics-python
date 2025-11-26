@@ -1,0 +1,6 @@
+Curie	Name	Definition	Stereotype	IsAbstract
+iso20022:PaymentInstruction	PaymentInstruction	Top-level payment instruction message.	Class	false
+iso20022:CreditorAgent	CreditorAgent	Financial institution servicing the creditor.	Class	false
+iso20022:PostalAddress	PostalAddress	Information that locates and identifies a specific address.	Class	false
+iso20022:ChargeBearerChoice	ChargeBearerChoice	Specifies which party bears the charges and allows a proprietary text alternative.	Choice	false
+iso20022:Amount	Amount	Amount of money with currency.	Class	false

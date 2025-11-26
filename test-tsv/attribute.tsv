@@ -1,0 +1,9 @@
+Class	Curie	Name	ClassEnumOrPrimitiveType	MinMultiplicity	MaxMultiplicity	Definition	Pattern	MinLength	MaxLength	MinInclusive	MaxInclusive	MinExclusive	MaxExclusive	TotalDigits	FractionDigits
+iso20022:PaymentInstruction	iso20022:PaymentInstruction.InstructedAmount	InstructedAmount	iso20022:Amount	1	1	Amount of money to be moved.									
+iso20022:PaymentInstruction	iso20022:PaymentInstruction.ChargeBearer	ChargeBearer	iso20022:ChargeBearerChoice	0	1	Indicates which party will bear the charges.									
+iso20022:CreditorAgent	iso20022:CreditorAgent.BIC	BIC	iso20022dt:BICFIDec2014Identifier	1	1	Business Identifier Code (BIC) of the creditor agent.									
+iso20022:PostalAddress	iso20022:PostalAddress.Country	Country	iso20022cd:CountryCode	0	1	Country code.									
+iso20022:PostalAddress	iso20022:PostalAddress.StreetName	StreetName	iso20022dt:Max70Text	0	1	Name of a street or thoroughfare.									
+iso20022:ChargeBearerChoice	iso20022:ChargeBearerChoice.Code	Code	iso20022cd:ChargeBearerCode	0	1	Specifies which party will bear the charges.									
+iso20022:ChargeBearerChoice	iso20022:ChargeBearerChoice.ProprietaryText	ProprietaryText	iso20022dt:Max35Text	0	1	Proprietary definition of the charge bearer.									
+iso20022:Amount	iso20022:Amount.Value	Value	iso20022dt:ActiveCurrencyAndAmount	1	1	Amount of money including currency.									
