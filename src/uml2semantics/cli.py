@@ -1,79 +1,40 @@
-from __future__ import annotations
-
 import argparse
 from pathlib import Path
-
-from .converter import Uml2OwlConverter, PrefixConfig
-from .tsv import read_tsv
-
-
-def _guess_format(path: Path) -> str:
-    ext = path.suffix.lower()
-    if ext == ".ttl":
-        return "turtle"
-    if ext == ".nt":
-        return "nt"
-    if ext in (".jsonld", ".json"):
-        return "json-ld"
-    return "xml"
-
-
-def build_arg_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(
-        prog="uml2semantics",
-        description="Convert UML-style TSV specifications into an OWL 2 ontology.",
-    )
-
-    p.add_argument("-c", "--classes", required=True, help="TSV file with Classes")
-    p.add_argument("-a", "--attributes", required=True, help="TSV file with Attributes / Associations")
-    p.add_argument("-e", "--enumerations", help="TSV file with Enumerations (optional)")
-    p.add_argument("-n", "--enum-values", help="TSV file with Enumeration Named Values (optional)")
-    p.add_argument("--datatypes", help="TSV with Datatypes (optional)")
-    p.add_argument("--annotation-properties", help="TSV with Annotation Properties (optional)")
-    p.add_argument("--annotations", help="TSV with Annotations (optional)")
-    p.add_argument("-o", "--output", required=True, help="Output ontology file. Format inferred from extension")
-    p.add_argument("-p", "--prefix",
-                   help="Prefix mapping, e.g. 'iso:http://example.org/ns#' or multiple separated by commas.")
-    p.add_argument("-i", "--ontology-iri", required=True, help="Ontology IRI / base IRI.")
-
-    return p
+from .tsv_loader import load_model
+from .ontology_builder import serialise_ontology
 
 
 def main() -> None:
-    parser = build_arg_parser()
+    parser = argparse.ArgumentParser(description="Convert UML-style TSV files to an OWL ontology.")
+    parser.add_argument("--classes", "-c", type=Path, help="Classes TSV file")
+    parser.add_argument("--attributes", "-a", type=Path, help="Attributes TSV file")
+    parser.add_argument("--enumerations", "-e", type=Path, help="Enumerations TSV file")
+    parser.add_argument("--enum-values", "-n", type=Path, help="Enumeration named values TSV file")
+    parser.add_argument("--datatypes", "-d", type=Path, help="Datatypes TSV file")
+    parser.add_argument("--output", "-o", type=Path, required=True, help="Output ontology file")
+    parser.add_argument("--ontology-iri", "-i", type=str, required=True, help="Ontology IRI")
+    parser.add_argument("--prefixes", "-p", type=str, default="", help="Prefix declarations, e.g. iso=http://iso20022.org/iso20022#;xsd=http://www.w3.org/2001/XMLSchema#")
+    parser.add_argument("--format", type=str, choices=["xml", "turtle"], default="xml", help="Serialisation format")
+    parser.add_argument("--xml-base", type=str, default=None, help="Optional xml:base for RDF/XML")
     args = parser.parse_args()
 
-    prefixes = PrefixConfig.from_string(args.prefix).prefixes
-    conv = Uml2OwlConverter(base_iri=args.ontology_iri, prefixes=prefixes)
+    model = load_model(
+        classes_tsv=args.classes,
+        enums_tsv=args.enumerations,
+        enum_literals_tsv=args.enum_values,
+        datatypes_tsv=args.datatypes,
+        attributes_tsv=args.attributes,
+    )
 
-    class_rows = read_tsv(args.classes)
-    attr_rows = read_tsv(args.attributes)
-    enum_rows = read_tsv(args.enumerations)
-    enum_val_rows = read_tsv(args.enum_values)
-    datatype_rows = read_tsv(args.datatypes)
-    ann_prop_rows = read_tsv(args.annotation_properties)
-    ann_rows = read_tsv(args.annotations)
+    serialise_ontology(
+        model=model,
+        ontology_iri=args.ontology_iri,
+        prefix_str=args.prefixes,
+        output_path=args.output,
+        format=args.format,
+        xml_base=args.xml_base,
+    )
 
-    if ann_prop_rows:
-        conv.add_annotation_properties(ann_prop_rows)
 
-    if datatype_rows:
-        conv.add_datatypes(datatype_rows)
-
-    conv.add_classes(class_rows)
-
-    if enum_rows:
-        conv.add_enumerations(enum_rows)
-    if enum_val_rows:
-        conv.add_enum_values(enum_val_rows)
-
-    conv.add_attributes(attr_rows)
-
-    if ann_rows:
-        conv.add_annotations(ann_rows)
-
-    out_path = Path(args.output)
-    fmt = _guess_format(out_path)
-
-    conv.graph.serialize(destination=str(out_path), format=fmt)
-    print(f"uml2semantics: wrote ontology to {out_path} (format={fmt})")
+if __name__ == "__main__":
+    main()

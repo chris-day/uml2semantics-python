@@ -1,3 +1,0 @@
-Curie	Name	Definition
-iso20022cd:ChargeBearerCode	ChargeBearerCode	Specifies which party is to bear the charges associated with processing the payment transaction.
-iso20022cd:CountryCode	CountryCode	Code identifying a country.

@@ -1,4 +1,2 @@
-from .converter import Uml2OwlConverter
-
-__all__ = ["Uml2OwlConverter"]
-__version__ = "0.8.2"
+"""uml2semantics-python core package."""
+__all__ = ["model", "tsv_loader", "ontology_builder", "cli"]
