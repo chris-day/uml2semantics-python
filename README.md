@@ -1,30 +1,72 @@
-# uml2semantics (Python)
+# uml2semantics-python 0.8.4
 
-CLI/library to convert UML-style TSV specifications into an OWL 2 ontology using rdflib.
+A refactored Python implementation of the original `uml2semantics` tool, updated so that
+OWL 2 semantics are used consistently throughout the generated ontology.
 
-## Features
+## Key features
 
-- UML-style **Classes** and **Attributes / Associations** from TSV
-- **Enumerations** and **enumeration individuals**
-- **Named datatypes** with XSD facets (pattern, min/max length, inclusive/exclusive bounds)
-- ISO-style **Choice patterns** (union + disjoint classes)
-- **Exact cardinality** emission (`n..n -> owl:cardinality n`)
-- TSV-driven **annotation properties** and annotation assertions
-- Worked examples for ISO 4217 currency codes, LEI, BIC
-- Example ontology in **Turtle** and **Manchester OWL** renderings
+- Converts UML models (via XMI) into OWL 2 ontologies
+- Preserves UML class, property, and enumeration structure
+- Generates OWL 2 class, object property, and data property axioms
+- Supports datatype restrictions using proper OWL 2 patterns
+- Backwards‑compatible command‑line interface with the 0.8.2 release
+- Pluggable “profile” options for ISO 20022 and generic UML
 
-The package includes:
-
-- `examples/` – ready-to-run TSVs, PlantUML architecture, and sample OWL ontologies
-- `docs/tutorial.md` – tutorial-style walkthrough
-- `docs/uml2semantics-architecture.md` – docs page embedding the PlantUML diagram
-
----
-
-## Command line usage
+## Installation
 
 ```bash
-uml2semantics   -c examples/Classes.tsv   -a examples/Attributes.tsv   --datatypes examples/Datatypes.tsv   -e examples/Enumerations.tsv   -n examples/EnumerationNamedValues.tsv   --annotation-properties examples/AnnotationProperties.tsv   --annotations examples/Annotations.tsv   -o out.ttl   -p "iso:http://iso20022.example/ontology#,rdfs:http://www.w3.org/2000/01/rdf-schema#,skos:http://www.w3.org/2004/02/skos/core#"   -i "http://iso20022.example/ontology"
+pip install .
 ```
 
-See `docs/tutorial.md` for a full walkthrough and `examples/example-ontology.ttl` / `examples/example-ontology.manchester.owl` for the output.
+or, using `pipx`:
+
+```bash
+pipx install .
+```
+
+## Command‑line usage
+
+The main entry point is:
+
+```bash
+uml2semantics [OPTIONS]
+```
+
+Supported options (compatible with 0.8.2):
+
+- `-i, --input PATH` – UML/XMI input file
+- `-o, --output PATH` – Output ontology path (RDF/XML, Turtle, or OWL/XML)
+- `-f, --format {rdfxml,turtle,owlxml}` – Output serialisation format
+- `-b, --base-iri IRI` – Base IRI for generated ontology
+- `-p, --profile {generic,iso20022}` – Mapping profile to apply
+- `--imports IRI` – Additional ontology IRI to import (repeatable)
+- `--no-imports` – Disable automatic imports
+- `--validate / --no-validate` – Turn structural validation on/off
+- `--log-level {ERROR,WARNING,INFO,DEBUG}` – Logging verbosity
+- `--dry-run` – Parse and build in memory, but do not write a file
+- `--version` – Show version information and exit
+
+Example:
+
+```bash
+uml2semantics -i examples/simple-model.xmi -o examples/simple-model.owl -f turtle -p iso20022
+```
+
+## Python API
+
+```python
+from uml2semantics.converter import Uml2OwlConverter, ConversionOptions
+
+opts = ConversionOptions(
+    input_path="examples/simple-model.xmi",
+    output_path="examples/simple-model.owl",
+    output_format="turtle",
+    base_iri="http://example.org/uml2semantics/demo#",
+    profile="generic",
+)
+
+converter = Uml2OwlConverter(opts)
+graph = converter.run()
+```
+
+See `docs/cli.md` and `docs/architecture.md` for more details.

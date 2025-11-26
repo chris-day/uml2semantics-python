@@ -1,0 +1,8 @@
+EnumerationCurie	Curie	Code	Name	Definition
+iso20022cd:ChargeBearerCode	iso20022cd:DEBT	DEBT	Debtor	Charges are to be borne by the debtor.
+iso20022cd:ChargeBearerCode	iso20022cd:CRED	CRED	Creditor	Charges are to be borne by the creditor.
+iso20022cd:ChargeBearerCode	iso20022cd:SHAR	SHAR	Shared	Charges are shared between debtor and creditor.
+iso20022cd:ChargeBearerCode	iso20022cd:SLEV	SLEV	ServiceLevel	Charges are to be applied following the rules agreed in the service level.
+iso20022cd:CountryCode	iso20022cd:GB	GB	UnitedKingdom	United Kingdom of Great Britain and Northern Ireland.
+iso20022cd:CountryCode	iso20022cd:CH	CH	Switzerland	Swiss Confederation.
+iso20022cd:CountryCode	iso20022cd:US	US	UnitedStates	United States of America.
