@@ -1,10 +1,4 @@
-"""uml2semantics-python
+from .converter import Uml2OwlConverter
 
-Python implementation of the UML → OWL 2 mapping.
-"""
-
-__all__ = [
-    "__version__",
-]
-
-__version__ = "0.9.0"
+__all__ = ["Uml2OwlConverter"]
+__version__ = "0.8.2"
