@@ -1,6 +1,2 @@
 Enumeration	Curie	Name	Definition
-CurrencyCode	iso:GBP	GBP	Pound Sterling
-CurrencyCode	iso:EUR	EUR	Euro
-CurrencyCode	iso:USD	USD	US Dollar
-CurrencyCode	iso:JPY	JPY	Japanese Yen
-CurrencyCode	iso:CHF	CHF	Swiss Franc
+:CurrencyCode	iso:GBP	GBP	Pound Sterling

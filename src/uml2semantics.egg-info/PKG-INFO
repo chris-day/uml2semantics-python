@@ -1,10 +1,11 @@
 Metadata-Version: 2.4
 Name: uml2semantics
-Version: 0.9.4
+Version: 0.9.15
 Summary: Convert UML-style TSV specifications into OWL 2 ontologies, including ISO 20022-style Choice patterns.
-Author: Your Name
+Author: Chris Day
 License: Apache-2.0
 Project-URL: Homepage, https://github.com/chris-day/uml2semantics-python
+Project-URL: repository, https://github.com/chris-day/uml2semantics-python
 Requires-Python: >=3.9
 Description-Content-Type: text/markdown
 License-File: LICENSE
