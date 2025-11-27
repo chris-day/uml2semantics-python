@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "uml2semantics"
-version = "0.9.4"
+version = "0.9.15"
 description = "Convert UML-style TSV specifications into OWL 2 ontologies, including ISO 20022-style Choice patterns."
 authors = [
-  { name = "Your Name" }
+  { name = "Chris Day" }
 ]
 readme = "README.md"
 requires-python = ">=3.9"
