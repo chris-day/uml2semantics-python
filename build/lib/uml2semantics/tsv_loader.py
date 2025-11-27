@@ -36,10 +36,15 @@ def load_model(
 ) -> Model:
     model = Model()
 
+    # Classes (Name required)
     if classes_tsv:
         for r in _read_tsv(classes_tsv):
             curie = r.get("Curie") or None
             name = r.get("Name") or None
+            if not name:
+                raise ValueError(
+                    f"Class with CURIE '{curie}' is missing a Name; TSV Name must be populated for all classes."
+                )
             definition = r.get("Definition") or None
             parents = r.get("ParentNames") or ""
             parent_curie_list = [p.strip() for p in parents.split("|") if p.strip()]
@@ -60,16 +65,22 @@ def load_model(
             if key:
                 model.classes[key] = cls
 
+    # Enumerations (Name required)
     if enums_tsv:
         for r in _read_tsv(enums_tsv):
             curie = r.get("Curie") or None
             name = r.get("Name") or None
+            if not name:
+                raise ValueError(
+                    f"Enumeration with CURIE '{curie}' is missing a Name; TSV Name must be populated for all enumerations."
+                )
             definition = r.get("Definition") or None
             en = UmlEnumeration(curie=curie, name=name, definition=definition)
             key = curie or name
             if key:
                 model.enumerations[key] = en
 
+    # Enumeration named values (Name optional)
     if enum_literals_tsv:
         for r in _read_tsv(enum_literals_tsv):
             enum_ref = r.get("Enumeration") or ""
@@ -85,6 +96,7 @@ def load_model(
                 )
                 model.enum_literals.append(lit)
 
+    # Datatypes (Name optional but recommended)
     if datatypes_tsv:
         for r in _read_tsv(datatypes_tsv):
             curie = r.get("Curie") or None
@@ -110,6 +122,7 @@ def load_model(
             if key:
                 model.datatypes[key] = dt
 
+    # Attributes (Name required)
     if attributes_tsv:
         for r in _read_tsv(attributes_tsv):
             class_ref = r.get("Class") or ""
@@ -118,8 +131,15 @@ def load_model(
             curie = r.get("Curie") or None
             name = r.get("Name") or None
             if not name:
-                raise ValueError(f"Attribute for class '{class_ref}' with CURIE '{curie}' is missing a Name; TSV Name must be populated.")
-            type_ref = r.get("ClassEnumOrPrimitiveType") or ""
+                raise ValueError(
+                    f"Attribute for class '{class_ref}' with CURIE '{curie}' is missing a Name; TSV Name must be populated for all attributes."
+                )
+            # Support both spellings: Primitive / Primative
+            type_ref = (
+                r.get("ClassEnumOrPrimitiveType")
+                or r.get("ClassEnumOrPrimativeType")
+                or ""
+            )
             definition = r.get("Definition") or None
             min_mult = r.get("MinMultiplicity") or ""
             max_mult = r.get("MaxMultiplicity") or ""

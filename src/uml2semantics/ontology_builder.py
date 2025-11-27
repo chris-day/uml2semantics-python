@@ -1,7 +1,10 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
+import logging
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
 from rdflib.namespace import RDF, RDFS, OWL, XSD
-from .model import Model, UmlDatatype, UmlAttribute
+from .model import Model, UmlDatatype, UmlAttribute, UmlClass
+
+log = logging.getLogger(__name__)
 
 
 def parse_prefixes(prefix_str: str) -> Dict[str, str]:
@@ -114,6 +117,7 @@ def _emit_named_datatype(g: Graph, dt: UmlDatatype, prefix_map: Dict[str, str]) 
         g.add((dt_uri, RDFS.label, Literal(dt.name)))
     if dt.definition:
         g.add((dt_uri, RDFS.comment, Literal(dt.definition)))
+
     has_facets = any([
         dt.pattern,
         dt.min_length is not None,
@@ -125,11 +129,18 @@ def _emit_named_datatype(g: Graph, dt: UmlDatatype, prefix_map: Dict[str, str]) 
         dt.total_digits is not None,
         dt.fraction_digits is not None,
     ])
+
+    base_uri = _base_datatype_iri(dt.base_datatype, prefix_map) if dt.base_datatype else None
+
     if not has_facets:
+        if base_uri is not None:
+            g.add((dt_uri, OWL.equivalentClass, base_uri))
         return
+
     restr_dt = BNode()
     g.add((restr_dt, RDF.type, RDFS.Datatype))
-    base_uri = _base_datatype_iri(dt.base_datatype, prefix_map)
+    if base_uri is None:
+        base_uri = XSD.string
     g.add((restr_dt, OWL.onDatatype, base_uri))
     facet_nodes = _facet_nodes_for_datatype(
         g,
@@ -150,9 +161,9 @@ def _emit_named_datatype(g: Graph, dt: UmlDatatype, prefix_map: Dict[str, str]) 
     g.add((dt_uri, OWL.equivalentClass, restr_dt))
 
 
-def _emit_inline_datatype_range(g: Graph, attr: UmlAttribute, prefix_map: Dict[str, str]) -> URIRef:
+def _emit_inline_datatype_range(g: Graph, attr: UmlAttribute, prefix_map: Dict[str, str]) -> BNode:
     t = attr.type_curie_or_primitive
-    if t in prefix_map or ":" in t:
+    if ":" in t:
         base_uri = _base_datatype_iri(t, prefix_map)
     else:
         base_uri = XSD.string
@@ -178,15 +189,97 @@ def _emit_inline_datatype_range(g: Graph, attr: UmlAttribute, prefix_map: Dict[s
     return restr_dt
 
 
+def _build_token_index(model: Model, prefix_map: Dict[str, str]):
+    class_token_to_uri: Dict[str, URIRef] = {}
+    enum_token_to_uri: Dict[str, URIRef] = {}
+    dt_token_to_uri: Dict[str, URIRef] = {}
+
+    for cls in model.classes.values():
+        if cls.curie:
+            class_token_to_uri[cls.curie] = _expand(cls.curie, prefix_map)
+        if cls.name:
+            base_ident = cls.curie or cls.name
+            class_token_to_uri[cls.name] = _expand(base_ident, prefix_map)
+
+    for en in model.enumerations.values():
+        if en.curie:
+            enum_token_to_uri[en.curie] = _expand(en.curie, prefix_map)
+        if en.name:
+            base_ident = en.curie or en.name
+            enum_token_to_uri[en.name] = _expand(base_ident, prefix_map)
+
+    for dt in model.datatypes.values():
+        if dt.curie:
+            dt_token_to_uri[dt.curie] = _expand(dt.curie, prefix_map)
+        if dt.name:
+            base_ident = dt.curie or dt.name
+            dt_token_to_uri[dt.name] = _expand(base_ident, prefix_map)
+
+    return class_token_to_uri, enum_token_to_uri, dt_token_to_uri
+
+
+def _classify_target(
+    attr: UmlAttribute,
+    prefix_map: Dict[str, str],
+    class_token_to_uri: Dict[str, URIRef],
+    enum_token_to_uri: Dict[str, URIRef],
+    dt_token_to_uri: Dict[str, URIRef],
+) -> Tuple[str, URIRef]:
+    target = attr.type_curie_or_primitive
+    if not target:
+        raise ValueError(
+            f"Attribute '{attr.name}' on '{attr.class_curie}' is missing ClassEnumOrPrimitiveType"
+        )
+
+    if target in class_token_to_uri:
+        return "object", class_token_to_uri[target]
+    if target in enum_token_to_uri:
+        return "object", enum_token_to_uri[target]
+    if target in dt_token_to_uri:
+        return "datatype", dt_token_to_uri[target]
+
+    if target.startswith("xsd:"):
+        base_uri = _base_datatype_iri(target, prefix_map)
+        return "datatype", base_uri
+
+    expanded = _expand(target, prefix_map)
+    if expanded in class_token_to_uri.values():
+        return "object", expanded
+    if expanded in enum_token_to_uri.values():
+        return "object", expanded
+    if expanded in dt_token_to_uri.values():
+        return "datatype", expanded
+
+    raise ValueError(
+        f"Unknown ClassEnumOrPrimitiveType '{target}' for attribute '{attr.name}' on class '{attr.class_curie}'. "
+        f"It does not resolve to a class, enumeration, named datatype, or xsd: primitive."
+    )
+
+
 def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
     g = Graph()
     prefix_map = parse_prefixes(prefix_str)
+
+    g.bind("rdf", RDF)
+    g.bind("rdfs", RDFS)
+    g.bind("owl", OWL)
+    g.bind("xsd", XSD)
+
     for pfx, iri in prefix_map.items():
         g.bind(pfx, Namespace(iri))
+
     ont_uri = URIRef(ontology_iri)
     g.add((ont_uri, RDF.type, OWL.Ontology))
 
-    # Classes
+    # Index classes by token (curie and name) for Choice lookup and defaults
+    class_by_token: Dict[str, UmlClass] = {}
+    for cls in model.classes.values():
+        if cls.curie:
+            class_by_token[cls.curie] = cls
+        if cls.name:
+            class_by_token[cls.name] = cls
+
+    # Emit classes
     for cls in model.classes.values():
         ident = cls.curie or cls.name
         if not ident:
@@ -199,16 +292,6 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
             g.add((uri, RDFS.comment, Literal(cls.definition)))
         for parent in cls.parent_curie_list:
             g.add((uri, RDFS.subClassOf, _expand(parent, prefix_map)))
-        if cls.choice_of:
-            members = [_expand(c, prefix_map) for c in cls.choice_of]
-            union_class = BNode()
-            g.add((union_class, RDF.type, OWL.Class))
-            lst = _make_rdf_list(g, members)
-            g.add((union_class, OWL.unionOf, lst))
-            g.add((uri, RDFS.subClassOf, union_class))
-            if cls.choice_semantics and cls.choice_semantics.lower().startswith("exclusive"):
-                for m in members:
-                    g.add((uri, OWL.disjointWith, m))
 
     # Enumerations
     for en in model.enumerations.values():
@@ -239,23 +322,35 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
     for dt in model.datatypes.values():
         _emit_named_datatype(g, dt, prefix_map)
 
-    # Attributes → properties
-    from .model import UmlAttribute  # avoid circular
+    class_token_to_uri, enum_token_to_uri, dt_token_to_uri = _build_token_index(model, prefix_map)
 
     restrictions_by_domain: Dict[URIRef, List[URIRef]] = {}
+    restrictions_by_attr: Dict[Tuple[str, str], URIRef] = {}
 
+    # Build attributes: properties + qualified restrictions
     for attr in model.attributes:
         domain_uri = _expand(attr.class_curie, prefix_map)
         prop_ident = attr.curie or attr.name
         if not prop_ident:
             continue
         prop_uri = _expand(prop_ident, prefix_map)
-        target = attr.type_curie_or_primitive
-        is_object = target in model.classes or target in model.enumerations
-        if is_object:
+
+        # If attribute participates in a Choice and has no multiplicity,
+        # default to min 0, max 1.
+        cls_for_attr = class_by_token.get(attr.class_curie)
+        if cls_for_attr and attr.name in cls_for_attr.choice_of:
+            if attr.min_cardinality is None and attr.max_cardinality is None:
+                attr.min_cardinality = 0
+                attr.max_cardinality = 1
+
+        kind, target_uri = _classify_target(attr, prefix_map, class_token_to_uri, enum_token_to_uri, dt_token_to_uri)
+
+        # Determine the actual range node used on the property
+        if kind == "object":
+            range_node: Union[URIRef, BNode] = target_uri
             g.add((prop_uri, RDF.type, OWL.ObjectProperty))
             g.add((prop_uri, RDFS.domain, domain_uri))
-            g.add((prop_uri, RDFS.range, _expand(target, prefix_map)))
+            g.add((prop_uri, RDFS.range, range_node))
         else:
             g.add((prop_uri, RDF.type, OWL.DatatypeProperty))
             g.add((prop_uri, RDFS.domain, domain_uri))
@@ -270,43 +365,102 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
                 attr.total_digits is not None,
                 attr.fraction_digits is not None,
             ])
-            if has_inline:
-                range_dt = _emit_inline_datatype_range(g, attr, prefix_map)
-                g.add((prop_uri, RDFS.range, range_dt))
+            if has_inline and str(target_uri).startswith(str(XSD)):
+                range_node = _emit_inline_datatype_range(g, attr, prefix_map)
+                g.add((prop_uri, RDFS.range, range_node))
             else:
-                if target in model.datatypes:
-                    g.add((prop_uri, RDFS.range, _expand(target, prefix_map)))
-                else:
-                    g.add((prop_uri, RDFS.range, _base_datatype_iri(target, prefix_map)))
+                range_node = target_uri
+                g.add((prop_uri, RDFS.range, range_node))
 
-        # rdfs:label from TSV Name (always populated; loader enforces)
         if attr.name:
             g.add((prop_uri, RDFS.label, Literal(attr.name)))
-
         if attr.definition:
             g.add((prop_uri, RDFS.comment, Literal(attr.definition)))
 
+        # Qualified cardinality restrictions
         if attr.min_cardinality is not None or attr.max_cardinality is not None:
             restr = BNode()
             g.add((restr, RDF.type, OWL.Restriction))
             g.add((restr, OWL.onProperty, prop_uri))
+
+            if kind == "object":
+                g.add((restr, OWL.onClass, range_node))
+            else:
+                g.add((restr, OWL.onDataRange, range_node))
+
             if (
                 attr.min_cardinality is not None
                 and attr.max_cardinality is not None
                 and attr.max_cardinality != "*"
                 and attr.min_cardinality == attr.max_cardinality
             ):
-                g.add((restr, OWL.cardinality, Literal(attr.min_cardinality, datatype=XSD.nonNegativeInteger)))
+                g.add((
+                    restr,
+                    OWL.cardinality,
+                    Literal(attr.min_cardinality, datatype=XSD.nonNegativeInteger),
+                ))
             else:
                 if attr.min_cardinality is not None:
-                    g.add((restr, OWL.minCardinality, Literal(attr.min_cardinality, datatype=XSD.nonNegativeInteger)))
+                    g.add((
+                        restr,
+                        OWL.minCardinality,
+                        Literal(attr.min_cardinality, datatype=XSD.nonNegativeInteger),
+                    ))
                 if attr.max_cardinality not in (None, "*"):
-                    g.add((restr, OWL.maxCardinality, Literal(attr.max_cardinality, datatype=XSD.nonNegativeInteger)))
+                    g.add((
+                        restr,
+                        OWL.maxCardinality,
+                        Literal(attr.max_cardinality, datatype=XSD.nonNegativeInteger),
+                    ))
+
             restrictions_by_domain.setdefault(domain_uri, []).append(restr)
 
+            if attr.name:
+                restrictions_by_attr[(attr.class_curie, attr.name)] = restr
+
+    # Attach restrictions to domains
     for domain_uri, restrs in restrictions_by_domain.items():
         for r in restrs:
             g.add((domain_uri, RDFS.subClassOf, r))
+
+    # Choice semantics: ChoiceOf interpreted as attribute names local to the class
+    for cls in model.classes.values():
+        if not cls.choice_of:
+            continue
+        class_ident = cls.curie or cls.name
+        if not class_ident:
+            continue
+        class_uri = _expand(class_ident, prefix_map)
+
+        choice_restrictions: List[URIRef] = []
+        for choice_attr_name in cls.choice_of:
+            restr = None
+            if cls.curie:
+                restr = restrictions_by_attr.get((cls.curie, choice_attr_name))
+            if restr is None and cls.name:
+                restr = restrictions_by_attr.get((cls.name, choice_attr_name))
+            if restr is None:
+                log.warning(
+                    "Choice attribute '%s' on class '%s' has no restriction; "
+                    "check multiplicities in TSV.",
+                    choice_attr_name,
+                    class_ident,
+                )
+                continue
+            choice_restrictions.append(restr)
+
+        if not choice_restrictions:
+            continue
+
+        union_class = BNode()
+        g.add((union_class, RDF.type, OWL.Class))
+        lst = _make_rdf_list(g, choice_restrictions)
+        g.add((union_class, OWL.unionOf, lst))
+        g.add((class_uri, RDFS.subClassOf, union_class))
+
+        if cls.choice_semantics and cls.choice_semantics.lower().startswith("exclusive"):
+            for r in choice_restrictions:
+                g.add((class_uri, OWL.disjointWith, r))
 
     return g
 
