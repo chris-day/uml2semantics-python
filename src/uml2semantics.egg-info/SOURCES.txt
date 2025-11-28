@@ -12,8 +12,8 @@ src/uml2semantics.egg-info/dependency_links.txt
 src/uml2semantics.egg-info/entry_points.txt
 src/uml2semantics.egg-info/requires.txt
 src/uml2semantics.egg-info/top_level.txt
+tests/test_choice_semantics.py
 tests/test_cli_smoke.py
-tests/test_curie_semantics.py
 tests/test_golden.py
 tests/test_import.py
 tests/test_imports.py
