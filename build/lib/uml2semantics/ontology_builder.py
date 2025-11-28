@@ -7,6 +7,21 @@ from .model import Model, UmlDatatype, UmlAttribute, UmlClass
 log = logging.getLogger(__name__)
 
 
+def _preferred_ident(curie: str, name: str, kind: str) -> Union[str, None]:
+    """
+    Return a CURIE/identifier preferring the provided CURIE. If no CURIE is
+    available, fall back to name and warn so consumers know a lossy identifier
+    was used.
+    """
+    if curie:
+        return curie
+    if name:
+        log.warning("%s '%s' is missing a CURIE; falling back to Name for identifier", kind, name)
+        return name
+    log.warning("%s is missing both CURIE and Name; skipping", kind)
+    return None
+
+
 def parse_prefixes(prefix_str: str) -> Dict[str, str]:
     prefix_map: Dict[str, str] = {}
     if not prefix_str:
@@ -108,7 +123,7 @@ def _base_datatype_iri(base: str, prefix_map: Dict[str, str]) -> URIRef:
 
 
 def _emit_named_datatype(g: Graph, dt: UmlDatatype, prefix_map: Dict[str, str]) -> None:
-    dt_ident = dt.curie or dt.name
+    dt_ident = _preferred_ident(dt.curie, dt.name, "Datatype")
     if not dt_ident:
         return
     dt_uri = _expand(dt_ident, prefix_map)
@@ -195,25 +210,34 @@ def _build_token_index(model: Model, prefix_map: Dict[str, str]):
     dt_token_to_uri: Dict[str, URIRef] = {}
 
     for cls in model.classes.values():
+        base_ident = _preferred_ident(cls.curie, cls.name, "Class") or ""
+        if not base_ident:
+            continue
+        uri = _expand(base_ident, prefix_map)
         if cls.curie:
-            class_token_to_uri[cls.curie] = _expand(cls.curie, prefix_map)
+            class_token_to_uri[cls.curie] = uri
         if cls.name:
-            base_ident = cls.curie or cls.name
-            class_token_to_uri[cls.name] = _expand(base_ident, prefix_map)
+            class_token_to_uri[cls.name] = uri
 
     for en in model.enumerations.values():
+        base_ident = _preferred_ident(en.curie, en.name, "Enumeration") or ""
+        if not base_ident:
+            continue
+        uri = _expand(base_ident, prefix_map)
         if en.curie:
-            enum_token_to_uri[en.curie] = _expand(en.curie, prefix_map)
+            enum_token_to_uri[en.curie] = uri
         if en.name:
-            base_ident = en.curie or en.name
-            enum_token_to_uri[en.name] = _expand(base_ident, prefix_map)
+            enum_token_to_uri[en.name] = uri
 
     for dt in model.datatypes.values():
+        base_ident = _preferred_ident(dt.curie, dt.name, "Datatype") or ""
+        if not base_ident:
+            continue
+        uri = _expand(base_ident, prefix_map)
         if dt.curie:
-            dt_token_to_uri[dt.curie] = _expand(dt.curie, prefix_map)
+            dt_token_to_uri[dt.curie] = uri
         if dt.name:
-            base_ident = dt.curie or dt.name
-            dt_token_to_uri[dt.name] = _expand(base_ident, prefix_map)
+            dt_token_to_uri[dt.name] = uri
 
     return class_token_to_uri, enum_token_to_uri, dt_token_to_uri
 
@@ -281,7 +305,7 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
 
     # Emit classes
     for cls in model.classes.values():
-        ident = cls.curie or cls.name
+        ident = _preferred_ident(cls.curie, cls.name, "Class")
         if not ident:
             continue
         uri = _expand(ident, prefix_map)
@@ -295,7 +319,7 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
 
     # Enumerations
     for en in model.enumerations.values():
-        ident = en.curie or en.name
+        ident = _preferred_ident(en.curie, en.name, "Enumeration")
         if not ident:
             continue
         uri = _expand(ident, prefix_map)
@@ -329,18 +353,34 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
 
     # Build attributes: properties + qualified restrictions
     for attr in model.attributes:
-        domain_uri = _expand(attr.class_curie, prefix_map)
-        prop_ident = attr.curie or attr.name
+        prop_ident = _preferred_ident(attr.curie, attr.name, "Attribute property")
         if not prop_ident:
             continue
+
+        domain_uri = class_token_to_uri.get(attr.class_curie)
+        if domain_uri is None:
+            log.warning(
+                "Attribute '%s' references class '%s' that was not in the model; expanding directly",
+                attr.name,
+                attr.class_curie,
+            )
+            domain_uri = _expand(attr.class_curie, prefix_map)
+
         prop_uri = _expand(prop_ident, prefix_map)
 
         # If attribute participates in a Choice and has no multiplicity,
-        # default to min 0, max 1.
+        # enforce at least one (min 1) and default max to 1 when absent.
         cls_for_attr = class_by_token.get(attr.class_curie)
         if cls_for_attr and attr.name in cls_for_attr.choice_of:
-            if attr.min_cardinality is None and attr.max_cardinality is None:
-                attr.min_cardinality = 0
+            if attr.min_cardinality is None or attr.min_cardinality == 0:
+                if attr.min_cardinality == 0:
+                    log.warning(
+                        "Choice attribute '%s' on class '%s' had min 0; promoting to 1 to satisfy choice semantics",
+                        attr.name,
+                        attr.class_curie,
+                    )
+                attr.min_cardinality = 1
+            if attr.max_cardinality is None:
                 attr.max_cardinality = 1
 
         kind, target_uri = _classify_target(attr, prefix_map, class_token_to_uri, enum_token_to_uri, dt_token_to_uri)
@@ -415,8 +455,19 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
 
             restrictions_by_domain.setdefault(domain_uri, []).append(restr)
 
-            if attr.name:
-                restrictions_by_attr[(attr.class_curie, attr.name)] = restr
+            if attr.name or attr.curie:
+                class_keys = {attr.class_curie}
+                cls_for_attr = class_by_token.get(attr.class_curie)
+                if cls_for_attr:
+                    if cls_for_attr.curie:
+                        class_keys.add(cls_for_attr.curie)
+                    if cls_for_attr.name:
+                        class_keys.add(cls_for_attr.name)
+                for key in class_keys:
+                    if attr.name:
+                        restrictions_by_attr[(key, attr.name)] = restr
+                    if attr.curie:
+                        restrictions_by_attr[(key, attr.curie)] = restr
 
     # Attach restrictions to domains
     for domain_uri, restrs in restrictions_by_domain.items():

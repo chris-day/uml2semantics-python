@@ -1,6 +1,6 @@
 [project]
 name = "uml2semantics"
-version = "0.9.15"
+version = "0.9.17"
 description = "Convert UML-style TSV specifications into OWL 2 ontologies, including ISO 20022-style Choice patterns."
 authors = [
   { name = "Chris Day" }
