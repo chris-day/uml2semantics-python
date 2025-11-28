@@ -84,13 +84,53 @@ def test_choice_min_zero_promoted_to_one():
     g = build_ontology(model, "http://example.com/ont#", "ex=http://example.com/")
 
     prop_uri = URIRef("http://example.com/bar")
+    class_uri = URIRef("http://example.com/Foo")
     restrictions = list(g.subjects(OWL.onProperty, prop_uri))
     assert restrictions, "Restriction for choice attribute not emitted"
+
+    # Restriction is only used inside the union, not attached directly to the class.
+    for r in restrictions:
+        assert (class_uri, RDFS.subClassOf, r) not in g
 
     has_cardinality_one = any(
         (r, OWL.cardinality, Literal(1, datatype=XSD.nonNegativeInteger)) in g for r in restrictions
     )
     assert has_cardinality_one, "Choice attribute cardinality was not promoted to 1"
+
+
+def test_choice_exclusive_is_pairwise_disjoint():
+    model = Model(
+        classes={
+            "ex:Foo": UmlClass(curie="ex:Foo", name="Foo", choice_of=["bar", "baz"], choice_semantics="exclusive"),
+        },
+        attributes=[
+            UmlAttribute(
+                class_curie="ex:Foo",
+                curie="ex:bar",
+                name="bar",
+                type_curie_or_primitive="xsd:string",
+                min_cardinality=1,
+                max_cardinality=1,
+            ),
+            UmlAttribute(
+                class_curie="ex:Foo",
+                curie="ex:baz",
+                name="baz",
+                type_curie_or_primitive="xsd:string",
+                min_cardinality=1,
+                max_cardinality=1,
+            ),
+        ],
+    )
+
+    g = build_ontology(model, "http://example.com/ont#", "ex=http://example.com/")
+    prop_bar = URIRef("http://example.com/bar")
+    prop_baz = URIRef("http://example.com/baz")
+
+    restr_bar = next(g.subjects(OWL.onProperty, prop_bar))
+    restr_baz = next(g.subjects(OWL.onProperty, prop_baz))
+
+    assert (restr_bar, OWL.disjointWith, restr_baz) in g or (restr_baz, OWL.disjointWith, restr_bar) in g
 
 
 def test_warns_when_falling_back_to_name(caplog):

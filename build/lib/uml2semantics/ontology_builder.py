@@ -371,7 +371,8 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
         # If attribute participates in a Choice and has no multiplicity,
         # enforce at least one (min 1) and default max to 1 when absent.
         cls_for_attr = class_by_token.get(attr.class_curie)
-        if cls_for_attr and attr.name in cls_for_attr.choice_of:
+        is_choice_attr = bool(cls_for_attr and attr.name in cls_for_attr.choice_of)
+        if is_choice_attr:
             if attr.min_cardinality is None or attr.min_cardinality == 0:
                 if attr.min_cardinality == 0:
                     log.warning(
@@ -452,8 +453,9 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
                         OWL.maxCardinality,
                         Literal(attr.max_cardinality, datatype=XSD.nonNegativeInteger),
                     ))
-
-            restrictions_by_domain.setdefault(domain_uri, []).append(restr)
+            # For Choice attributes, keep restriction only in the union (avoid direct subclass axiom).
+            if not is_choice_attr:
+                restrictions_by_domain.setdefault(domain_uri, []).append(restr)
 
             if attr.name or attr.curie:
                 class_keys = {attr.class_curie}
@@ -510,8 +512,10 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
         g.add((class_uri, RDFS.subClassOf, union_class))
 
         if cls.choice_semantics and cls.choice_semantics.lower().startswith("exclusive"):
-            for r in choice_restrictions:
-                g.add((class_uri, OWL.disjointWith, r))
+            # Pairwise disjoint between choice members to enforce exclusivity of the options.
+            for i in range(len(choice_restrictions)):
+                for j in range(i + 1, len(choice_restrictions)):
+                    g.add((choice_restrictions[i], OWL.disjointWith, choice_restrictions[j]))
 
     return g
 
