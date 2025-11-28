@@ -349,7 +349,6 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
     class_token_to_uri, enum_token_to_uri, dt_token_to_uri = _build_token_index(model, prefix_map)
 
     restrictions_by_domain: Dict[URIRef, List[URIRef]] = {}
-    restrictions_by_attr: Dict[Tuple[str, str], URIRef] = {}
 
     # Build attributes: properties + qualified restrictions
     for attr in model.attributes:
@@ -367,22 +366,6 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
             domain_uri = _expand(attr.class_curie, prefix_map)
 
         prop_uri = _expand(prop_ident, prefix_map)
-
-        # If attribute participates in a Choice and has no multiplicity,
-        # enforce at least one (min 1) and default max to 1 when absent.
-        cls_for_attr = class_by_token.get(attr.class_curie)
-        is_choice_attr = bool(cls_for_attr and attr.name in cls_for_attr.choice_of)
-        if is_choice_attr:
-            if attr.min_cardinality is None or attr.min_cardinality == 0:
-                if attr.min_cardinality == 0:
-                    log.warning(
-                        "Choice attribute '%s' on class '%s' had min 0; promoting to 1 to satisfy choice semantics",
-                        attr.name,
-                        attr.class_curie,
-                    )
-                attr.min_cardinality = 1
-            if attr.max_cardinality is None:
-                attr.max_cardinality = 1
 
         kind, target_uri = _classify_target(attr, prefix_map, class_token_to_uri, enum_token_to_uri, dt_token_to_uri)
 
@@ -453,69 +436,46 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
                         OWL.maxCardinality,
                         Literal(attr.max_cardinality, datatype=XSD.nonNegativeInteger),
                     ))
-            # For Choice attributes, keep restriction only in the union (avoid direct subclass axiom).
-            if not is_choice_attr:
-                restrictions_by_domain.setdefault(domain_uri, []).append(restr)
-
-            if attr.name or attr.curie:
-                class_keys = {attr.class_curie}
-                cls_for_attr = class_by_token.get(attr.class_curie)
-                if cls_for_attr:
-                    if cls_for_attr.curie:
-                        class_keys.add(cls_for_attr.curie)
-                    if cls_for_attr.name:
-                        class_keys.add(cls_for_attr.name)
-                for key in class_keys:
-                    if attr.name:
-                        restrictions_by_attr[(key, attr.name)] = restr
-                    if attr.curie:
-                        restrictions_by_attr[(key, attr.curie)] = restr
+            restrictions_by_domain.setdefault(domain_uri, []).append(restr)
 
     # Attach restrictions to domains
     for domain_uri, restrs in restrictions_by_domain.items():
         for r in restrs:
             g.add((domain_uri, RDFS.subClassOf, r))
 
-    # Choice semantics: ChoiceOf interpreted as attribute names local to the class
+    # Choice semantics: ChoiceOf interpreted as alternative classes
     for cls in model.classes.values():
         if not cls.choice_of:
             continue
-        class_ident = cls.curie or cls.name
+        class_ident = _preferred_ident(cls.curie, cls.name, "Class")
         if not class_ident:
             continue
         class_uri = _expand(class_ident, prefix_map)
 
-        choice_restrictions: List[URIRef] = []
-        for choice_attr_name in cls.choice_of:
-            restr = None
-            if cls.curie:
-                restr = restrictions_by_attr.get((cls.curie, choice_attr_name))
-            if restr is None and cls.name:
-                restr = restrictions_by_attr.get((cls.name, choice_attr_name))
-            if restr is None:
+        choice_members: List[URIRef] = []
+        for choice_token in cls.choice_of:
+            target = class_token_to_uri.get(choice_token)
+            if target is None:
                 log.warning(
-                    "Choice attribute '%s' on class '%s' has no restriction; "
-                    "check multiplicities in TSV.",
-                    choice_attr_name,
+                    "Choice member '%s' on class '%s' was not found among classes; ensure ChoiceOf lists class CURIEs or Names.",
+                    choice_token,
                     class_ident,
                 )
                 continue
-            choice_restrictions.append(restr)
+            choice_members.append(target)
 
-        if not choice_restrictions:
+        if not choice_members:
             continue
 
         union_class = BNode()
         g.add((union_class, RDF.type, OWL.Class))
-        lst = _make_rdf_list(g, choice_restrictions)
+        lst = _make_rdf_list(g, choice_members)
         g.add((union_class, OWL.unionOf, lst))
         g.add((class_uri, RDFS.subClassOf, union_class))
 
         if cls.choice_semantics and cls.choice_semantics.lower().startswith("exclusive"):
-            # Pairwise disjoint between choice members to enforce exclusivity of the options.
-            for i in range(len(choice_restrictions)):
-                for j in range(i + 1, len(choice_restrictions)):
-                    g.add((choice_restrictions[i], OWL.disjointWith, choice_restrictions[j]))
+            for member in choice_members:
+                g.add((class_uri, OWL.disjointWith, member))
 
     return g
 
