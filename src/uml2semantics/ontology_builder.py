@@ -349,6 +349,7 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
     class_token_to_uri, enum_token_to_uri, dt_token_to_uri = _build_token_index(model, prefix_map)
 
     restrictions_by_domain: Dict[URIRef, List[URIRef]] = {}
+    restrictions_by_attr: Dict[Tuple[str, str], URIRef] = {}
 
     # Build attributes: properties + qualified restrictions
     for attr in model.attributes:
@@ -438,12 +439,27 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
                     ))
             restrictions_by_domain.setdefault(domain_uri, []).append(restr)
 
+            # Index restriction by domain class tokens and attribute tokens (name/curie)
+            if attr.name or attr.curie:
+                class_keys = {attr.class_curie}
+                cls_for_attr = class_by_token.get(attr.class_curie)
+                if cls_for_attr:
+                    if cls_for_attr.curie:
+                        class_keys.add(cls_for_attr.curie)
+                    if cls_for_attr.name:
+                        class_keys.add(cls_for_attr.name)
+                for key in class_keys:
+                    if attr.name:
+                        restrictions_by_attr[(key, attr.name)] = restr
+                    if attr.curie:
+                        restrictions_by_attr[(key, attr.curie)] = restr
+
     # Attach restrictions to domains
     for domain_uri, restrs in restrictions_by_domain.items():
         for r in restrs:
             g.add((domain_uri, RDFS.subClassOf, r))
 
-    # Choice semantics: ChoiceOf interpreted as alternative classes
+    # Choice semantics: ChoiceOf interpreted as alternative classes (preferred) or attributes (fallback)
     for cls in model.classes.values():
         if not cls.choice_of:
             continue
@@ -455,14 +471,23 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
         choice_members: List[URIRef] = []
         for choice_token in cls.choice_of:
             target = class_token_to_uri.get(choice_token)
-            if target is None:
-                log.warning(
-                    "Choice member '%s' on class '%s' was not found among classes; ensure ChoiceOf lists class CURIEs or Names.",
-                    choice_token,
-                    class_ident,
-                )
+            if target is not None:
+                choice_members.append(target)
                 continue
-            choice_members.append(target)
+            # Fallback: attribute restriction by token on this class
+            restr = None
+            if cls.curie:
+                restr = restrictions_by_attr.get((cls.curie, choice_token))
+            if restr is None and cls.name:
+                restr = restrictions_by_attr.get((cls.name, choice_token))
+            if restr is not None:
+                choice_members.append(restr)
+                continue
+            log.warning(
+                "Choice member '%s' on class '%s' was not found among classes or attributes; ensure ChoiceOf lists class CURIEs/Names or attribute tokens.",
+                choice_token,
+                class_ident,
+            )
 
         if not choice_members:
             continue
