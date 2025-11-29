@@ -84,12 +84,12 @@ def test_choice_class_does_not_get_attribute_restrictions():
 
     # Property exists
     assert (prop_uri, RDF.type, OWL.ObjectProperty) in g
-    # Subclass restriction should still be attached to the choice class
-    has_restr = any(
+    # Subclass restriction should NOT be attached directly to the choice class; only via union
+    has_direct = any(
         (subclass_obj, OWL.onProperty, prop_uri) in g
         for _, _, subclass_obj in g.triples((choice_uri, RDFS.subClassOf, None))
     )
-    assert has_restr, "Attribute restriction should be present on choice class"
+    assert not has_direct, "Attribute restriction should only appear inside the choice union"
 
 
 def test_choice_attribute_token_in_choiceof_resolves():

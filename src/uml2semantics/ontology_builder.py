@@ -437,7 +437,19 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
                         OWL.maxCardinality,
                         Literal(attr.max_cardinality, datatype=XSD.nonNegativeInteger),
                     ))
-            restrictions_by_domain.setdefault(domain_uri, []).append(restr)
+            cls_for_attr = class_by_token.get(attr.class_curie)
+            choice_tokens = set(cls_for_attr.choice_of) if cls_for_attr else set()
+            is_choice_member = bool(
+                cls_for_attr
+                and choice_tokens
+                and (
+                    (attr.name and attr.name in choice_tokens)
+                    or (attr.curie and attr.curie in choice_tokens)
+                )
+            )
+            # Avoid duplicating choice members as direct subclass restrictions on the choice class.
+            if not is_choice_member:
+                restrictions_by_domain.setdefault(domain_uri, []).append(restr)
 
             # Index restriction by domain class tokens and attribute tokens (name/curie)
             if attr.name or attr.curie:
