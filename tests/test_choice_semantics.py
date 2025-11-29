@@ -52,10 +52,16 @@ def test_choice_exclusive_disjoint_with_members():
     member_a = URIRef("http://example.com/A")
     member_b = URIRef("http://example.com/B")
 
-    assert (choice_uri, OWL.disjointWith, member_a) in g
-    assert (choice_uri, OWL.disjointWith, member_b) in g
-    # Not pairwise disjoint unless explicitly modelled elsewhere
-    assert (member_a, OWL.disjointWith, member_b) not in g
+    # AllDisjointClasses node containing choice + members
+    disj_nodes = list(g.subjects(RDF.type, OWL.AllDisjointClasses))
+    assert disj_nodes, "Expected AllDisjointClasses for exclusive choice"
+    found = False
+    for dn in disj_nodes:
+        members = list(g.items(g.value(dn, OWL.members)))
+        if choice_uri in members and member_a in members and member_b in members:
+            found = True
+            break
+    assert found, "AllDisjointClasses does not contain choice and all members"
 
 
 def test_choice_class_does_not_get_attribute_restrictions():
