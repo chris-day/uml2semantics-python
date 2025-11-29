@@ -511,8 +511,10 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
         g.add((class_uri, RDFS.subClassOf, union_class))
 
         if cls.choice_semantics and cls.choice_semantics.lower().startswith("exclusive"):
-            for member in choice_members:
-                g.add((class_uri, OWL.disjointWith, member))
+            disj = BNode()
+            g.add((disj, RDF.type, OWL.AllDisjointClasses))
+            disjoint_set = [class_uri] + choice_members
+            g.add((disj, OWL.members, _make_rdf_list(g, disjoint_set)))
 
     return g
 
