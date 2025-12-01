@@ -1,4 +1,3 @@
-Enumeration	Curie	Name	Definition
-CurrencyCode	iso:GBP	GBP	Pound Sterling
-CurrencyCode	iso:EUR	EUR	Euro
-CurrencyCode	iso:USD	USD	US Dollar
+version https://git-lfs.github.com/spec/v1
+oid sha256:2e2db7f21fec0b9dd325064d79d0ff7f83f392237338c6127209763f6a7df3ce
+size 143

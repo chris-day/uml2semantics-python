@@ -1,5 +1,3 @@
-Class	Curie	Name	ClassEnumOrPrimitiveType	MinMultiplicity	MaxMultiplicity	Definition	Pattern	MinLength	MaxLength	MinInclusive	MaxInclusive	MinExclusive	MaxExclusive	TotalDigits	FractionDigits
-iso:Account	iso:ownerId	OwnerId	xsd:string	1	1	Account owner identifier	[A-Z0-9]+	16	16						
-iso:Account	iso:lei	LEI	iso:LEI20	0	1	Legal Entity Identifier of the account owner									
-iso:Account	iso:balance	Balance	iso:PositiveAmount	1	1	Account balance in the account currency									
-iso:Account	iso:ccy	Currency	CurrencyCode	1	1	Account currency (ISO 4217)									
+version https://git-lfs.github.com/spec/v1
+oid sha256:a1d0dc1de97f708790ad757fe2dfa1468424177ad444e2ac82bb5ebbd257e3e3
+size 570

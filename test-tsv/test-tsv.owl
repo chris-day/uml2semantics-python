@@ -1,8 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
-<rdf:RDF
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
->
-  <rdf:Description rdf:about="http://iso20022.org/iso20022">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Ontology"/>
-  </rdf:Description>
-</rdf:RDF>
+version https://git-lfs.github.com/spec/v1
+oid sha256:dd347a7fcdb1568d2196a9b2ef1959d126730e28cd74c40349651f407ac9b6b6
+size 272

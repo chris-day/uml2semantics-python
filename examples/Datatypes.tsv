@@ -1,2 +1,3 @@
-Curie	Name	BaseDatatype	Definition	Pattern	MinLength	MaxLength	MinInclusive	MaxInclusive	MinExclusive	MaxExclusive	TotalDigits	FractionDigits
-iso:LEI	LEI20	xsd:string	20-character Legal Entity Identifier	[A-Z0-9]{20}	20	20						
+version https://git-lfs.github.com/spec/v1
+oid sha256:83302b8527c4aecd512da83c15fdc15881b7c59763e66746bf7a4575ecab68da
+size 231

@@ -1,4 +1,3 @@
-Curie	Name	Definition
-rdfs:comment	comment	Human-readable description
-iso:status	status	ISO 20022 lifecycle / registration status
-iso:release	release	ISO 20022 release identifier (e.g. 2025-06)
+version https://git-lfs.github.com/spec/v1
+oid sha256:7e77d580a1432836e86d931c49f206871ea1e4dfb45c27a97364c112d0cbe205
+size 194

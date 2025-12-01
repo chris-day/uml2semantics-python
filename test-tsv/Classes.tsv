@@ -1,11 +1,3 @@
-Curie	Name	ParentNames	Definition	ChoiceOf	ChoiceSemantics
-iso:Account	Account		Customer account for payments		
-iso:Amount	Amount		Monetary amount		
-iso:FinInstrmQtyChoice	FinInstrmQtyChoice	iso:Amount	Financial instrument quantity choice leg		
-iso:OrigAndCurrQty	OrigAndCurrQty	iso:Amount	Original and current quantity leg		
-iso:QtyChoice	Quantity6Choice	iso:Amount	ISO 20022 quantity choice	iso:FinInstrmQtyChoice|iso:OrigAndCurrQty	exclusive
-iso:Party	Party		Generic party		
-iso:Originator	Originator	iso:Party	Originating party		
-iso:Intermediary	Intermediary	iso:Party	Intermediary party		
-iso:Beneficiary	Beneficiary	iso:Party	Beneficiary party		
-iso:TransactionPartyChoice	TransactionPartyChoice	iso:Party	Transaction party choice	iso:Originator|iso:Intermediary|iso:Beneficiary	inclusive
+version https://git-lfs.github.com/spec/v1
+oid sha256:85d47d60c58dad7d070ebb2e5ecc5147854b15f540776560b672147ca8922222
+size 807
