@@ -8,6 +8,8 @@ from .model import (
     UmlEnumLiteral,
     UmlDatatype,
     UmlAttribute,
+    AnnotationProperty,
+    AnnotationAssertion,
 )
 
 
@@ -33,6 +35,8 @@ def load_model(
     enum_literals_tsv: Optional[Path] = None,
     datatypes_tsv: Optional[Path] = None,
     attributes_tsv: Optional[Path] = None,
+    annotation_properties_tsv: Optional[Path] = None,
+    annotations_tsv: Optional[Path] = None,
 ) -> Model:
     model = Model()
 
@@ -167,5 +171,35 @@ def load_model(
                 fraction_digits=_to_int(r.get("FractionDigits") or ""),
             )
             model.attributes.append(attr)
+
+    # Annotation properties
+    if annotation_properties_tsv:
+        for r in _read_tsv(annotation_properties_tsv):
+            curie = r.get("Curie") or None
+            name = r.get("Name") or None
+            definition = r.get("Definition") or None
+            ap = AnnotationProperty(curie=curie, name=name, definition=definition)
+            key = curie or name
+            if key:
+                model.annotation_properties[key] = ap
+
+    # Annotation assertions
+    if annotations_tsv:
+        for r in _read_tsv(annotations_tsv):
+            target = r.get("TargetCurie") or ""
+            prop = r.get("AnnotationProperty") or ""
+            value = r.get("Value") or ""
+            lang = r.get("Language") or None
+            dtype = r.get("Datatype") or None
+            if not target or not prop or value == "":
+                continue
+            ann = AnnotationAssertion(
+                target_curie=target,
+                property_curie=prop,
+                value=value,
+                language=lang,
+                datatype=dtype,
+            )
+            model.annotations.append(ann)
 
     return model

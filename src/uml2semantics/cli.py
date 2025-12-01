@@ -8,7 +8,7 @@ from rdflib import URIRef
 from .tsv_loader import load_model
 from .ontology_builder import build_ontology
 
-VERSION = "0.9.24"
+VERSION = "0.9.26"
 
 
 def main() -> None:
@@ -21,6 +21,8 @@ def main() -> None:
     parser.add_argument("--enumerations", "-e", type=Path, help="Enumerations TSV file")
     parser.add_argument("--enum-values", "-n", type=Path, help="Enumeration named values TSV file")
     parser.add_argument("--datatypes", "-d", type=Path, help="Datatypes TSV file")
+    parser.add_argument("--annotation-properties", type=Path, help="Annotation properties TSV file")
+    parser.add_argument("--annotations", type=Path, help="Annotations TSV file")
 
     parser.add_argument("--output", "-o", type=Path, help="Output ontology file")
     parser.add_argument("--ontology-iri", "-i", type=str, help="Ontology IRI")
@@ -120,6 +122,8 @@ def main() -> None:
         enum_literals_tsv=args.enum_values,
         datatypes_tsv=args.datatypes,
         attributes_tsv=args.attributes,
+        annotation_properties_tsv=args.annotation_properties,
+        annotations_tsv=args.annotations,
     )
 
     logging.info("Building ontology graph...")

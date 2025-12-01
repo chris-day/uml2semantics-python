@@ -66,9 +66,27 @@ class UmlAttribute:
 
 
 @dataclass
+class AnnotationProperty:
+    curie: Optional[str]
+    name: Optional[str]
+    definition: Optional[str] = None
+
+
+@dataclass
+class AnnotationAssertion:
+    target_curie: str
+    property_curie: str
+    value: str
+    language: Optional[str] = None
+    datatype: Optional[str] = None
+
+
+@dataclass
 class Model:
     classes: Dict[str, UmlClass] = field(default_factory=dict)
     enumerations: Dict[str, UmlEnumeration] = field(default_factory=dict)
     enum_literals: List[UmlEnumLiteral] = field(default_factory=list)
     datatypes: Dict[str, UmlDatatype] = field(default_factory=dict)
     attributes: List[UmlAttribute] = field(default_factory=list)
+    annotation_properties: Dict[str, AnnotationProperty] = field(default_factory=dict)
+    annotations: List[AnnotationAssertion] = field(default_factory=list)
