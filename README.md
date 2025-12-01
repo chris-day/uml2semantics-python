@@ -1,5 +1,5 @@
 
-# uml2semantics-python 0.9.26
+# uml2semantics-python 0.9.28
 
 A refactored Python implementation of the original `uml2semantics` tool, updated so that
 OWL 2 semantics are used consistently throughout the generated ontology.
