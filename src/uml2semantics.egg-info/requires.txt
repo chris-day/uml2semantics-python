@@ -1,1 +1,8 @@
 rdflib>=7.0.0
+
+[test]
+pytest>=7.3
+
+[test:python_version < "3.11"]
+exceptiongroup>=1.2.0
+tomli>=2.0.1

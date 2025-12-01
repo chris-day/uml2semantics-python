@@ -10,6 +10,10 @@ Requires-Python: >=3.9
 Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: rdflib>=7.0.0
+Provides-Extra: test
+Requires-Dist: pytest>=7.3; extra == "test"
+Requires-Dist: exceptiongroup>=1.2.0; python_version < "3.11" and extra == "test"
+Requires-Dist: tomli>=2.0.1; python_version < "3.11" and extra == "test"
 Dynamic: license-file
 
 
