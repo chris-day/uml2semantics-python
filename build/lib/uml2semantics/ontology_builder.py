@@ -23,15 +23,26 @@ def _preferred_ident(curie: str, name: str, kind: str) -> Union[str, None]:
 
 
 def parse_prefixes(prefix_str: str) -> Dict[str, str]:
-    prefix_map: Dict[str, str] = {}
+    prefix_map: Dict[str, str] = {
+        "rdf": str(RDF),
+        "rdfs": str(RDFS),
+        "owl": str(OWL),
+        "xsd": str(XSD),
+    }
     if not prefix_str:
         return prefix_map
-    parts = [p.strip() for p in prefix_str.split(";") if p.strip()]
+    # Allow either ';' or ',' as separators
+    cleaned = prefix_str.replace(",", ";")
+    parts = [p.strip() for p in cleaned.split(";") if p.strip()]
     for part in parts:
-        if "=" not in part:
-            continue
-        pfx, iri = part.split("=", 1)
-        prefix_map[pfx.strip()] = iri.strip()
+        pfx = None
+        iri = None
+        if "=" in part:
+            pfx, iri = part.split("=", 1)
+        elif ":" in part:
+            pfx, iri = part.split(":", 1)
+        if pfx and iri:
+            prefix_map[pfx.strip()] = iri.strip()
     return prefix_map
 
 
@@ -297,9 +308,119 @@ def _classify_target(
     )
 
 
-def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
+def _validate_model(model: Model, prefix_map: Dict[str, str], strict: bool = False):
+    errors: List[str] = []
+    missing_prefixes: set[str] = set()
+    warnings: Dict[str, List[str]] = {"choice": [], "semantic": [], "annotation": []}
+
+    # Duplicate / missing identifiers
+    def _check_identities(items, kind: str):
+        seen: Dict[str, str] = {}
+        for obj in items:
+            curie = getattr(obj, "curie", None)
+            name = getattr(obj, "name", None)
+            ident = curie or name
+            if not ident:
+                errors.append(f"{kind} is missing both CURIE and Name")
+                continue
+            if ident in seen:
+                errors.append(f"Duplicate {kind} identifier '{ident}'")
+            else:
+                seen[ident] = kind
+
+    _check_identities(model.classes.values(), "Class")
+    _check_identities(model.enumerations.values(), "Enumeration")
+    _check_identities(model.datatypes.values(), "Datatype")
+    _check_identities(model.attributes, "Attribute")
+    _check_identities(model.annotation_properties.values(), "AnnotationProperty")
+
+    class_token_to_uri, enum_token_to_uri, dt_token_to_uri = _build_token_index(model, prefix_map)
+
+    # Prefix coverage
+    def _check_prefix(token: str, context: str):
+        if ":" in token:
+            pfx = token.split(":", 1)[0]
+            if pfx != "xsd" and pfx not in prefix_map:
+                missing_prefixes.add(pfx)
+
+    for t in list(class_token_to_uri.keys()) + list(enum_token_to_uri.keys()) + list(dt_token_to_uri.keys()):
+        _check_prefix(t, "identifiers")
+    for attr in model.attributes:
+        _check_prefix(attr.type_curie_or_primitive, f"attribute '{attr.name}' type")
+
+    # Multiplicities
+    for attr in model.attributes:
+        if attr.min_cardinality is not None and attr.min_cardinality < 0:
+            errors.append(f"Attribute '{attr.name}' has min_cardinality < 0")
+        if (
+            attr.min_cardinality is not None
+            and isinstance(attr.max_cardinality, int)
+            and attr.max_cardinality is not None
+            and attr.min_cardinality > attr.max_cardinality
+        ):
+            errors.append(f"Attribute '{attr.name}' has min_cardinality > max_cardinality")
+
+    # Attribute target resolution
+    for attr in model.attributes:
+        try:
+            _classify_target(attr, prefix_map, class_token_to_uri, enum_token_to_uri, dt_token_to_uri)
+        except ValueError as e:
+            errors.append(str(e))
+
+    # Choice members resolution
+    attrs_by_class: Dict[str, List[UmlAttribute]] = {}
+    for attr in model.attributes:
+        attrs_by_class.setdefault(attr.class_curie, []).append(attr)
+    for cls in model.classes.values():
+        if not cls.choice_of:
+            continue
+        tokens = cls.choice_of
+        for tok in tokens:
+            if tok in class_token_to_uri:
+                continue
+            found_attr = False
+            for candidate in attrs_by_class.get(cls.curie, []) + attrs_by_class.get(cls.name or "", []):
+                if tok in (candidate.name, candidate.curie):
+                    found_attr = True
+                    break
+            if not found_attr:
+                warnings["choice"].append(
+                    f"Choice member '{tok}' on class '{cls.curie or cls.name}' not found as class or attribute"
+                )
+
+        if cls.choice_semantics and cls.choice_semantics.lower() not in ("exclusive", "inclusive"):
+            warnings["semantic"].append(
+                f"ChoiceSemantics '{cls.choice_semantics}' on class '{cls.curie or cls.name}' is not recognized"
+            )
+
+    # Annotations: basic field presence
+    for ann in model.annotations:
+        if not ann.target_curie or not ann.property_curie or ann.value == "":
+            errors.append("Annotation row is missing TargetCurie, AnnotationProperty, or Value")
+
+    flat_warnings = []
+    if missing_prefixes:
+        flat_warnings.append("Prefixes not declared: " + ", ".join(sorted(missing_prefixes)))
+    for category, msgs in warnings.items():
+        if msgs:
+            flat_warnings.extend(msgs)
+
+    if errors or (strict and flat_warnings):
+        raise ValueError("Validation failed: " + "; ".join(errors + ([] if not strict else flat_warnings)))
+
+    if missing_prefixes:
+        log.warning("Validation warnings (prefix): %s", ", ".join(sorted(missing_prefixes)))
+    for cat, msgs in warnings.items():
+        if msgs:
+            log.warning("Validation warnings (%s): %s", cat, "; ".join(msgs))
+
+
+def build_ontology(model: Model, ontology_iri: str, prefix_str: str, strict: bool = False) -> Graph:
     g = Graph()
     prefix_map = parse_prefixes(prefix_str)
+    log.info("Prefixes in use: %s", ", ".join(f"{pfx}={iri}" for pfx, iri in prefix_map.items()))
+
+    _validate_model(model, prefix_map, strict=strict)
 
     g.bind("rdf", RDF)
     g.bind("rdfs", RDFS)

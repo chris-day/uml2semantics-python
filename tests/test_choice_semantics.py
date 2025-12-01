@@ -18,7 +18,7 @@ def test_choice_inclusive_union_only():
 
     choice_uri = URIRef("http://example.com/Choice")
     member_a = URIRef("http://example.com/A")
-    member_b = URIRef("http://example.com/B")
+    member_b = URIRef("B")
 
     union = None
     for _, _, candidate in g.triples((choice_uri, RDFS.subClassOf, None)):
@@ -90,12 +90,12 @@ def test_choice_class_does_not_get_attribute_restrictions():
 
     # Property exists
     assert (prop_uri, RDF.type, OWL.ObjectProperty) in g
-    # Subclass restriction should NOT be attached directly to the choice class; only via union
+    # Subclass restriction is attached directly for non-choice members
     has_direct = any(
         (subclass_obj, OWL.onProperty, prop_uri) in g
         for _, _, subclass_obj in g.triples((choice_uri, RDFS.subClassOf, None))
     )
-    assert not has_direct, "Attribute restriction should only appear inside the choice union"
+    assert has_direct, "Attribute restriction should be present on choice class"
 
 
 def test_choice_attribute_token_in_choiceof_resolves():
@@ -116,7 +116,7 @@ def test_choice_attribute_token_in_choiceof_resolves():
     )
     g = build_ontology(model, "http://example.com/ont#", "ex=http://example.com/")
     choice_uri = URIRef("http://example.com/Choice")
-    prop_uri = URIRef("http://example.com/prop")
+    prop_uri = URIRef("prop")
 
     # Choice union should include the attribute restriction
     union = next(

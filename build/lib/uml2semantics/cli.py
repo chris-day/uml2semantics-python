@@ -8,7 +8,7 @@ from rdflib import URIRef
 from .tsv_loader import load_model
 from .ontology_builder import build_ontology
 
-VERSION = "0.9.26"
+VERSION = "0.9.28"
 
 
 def main() -> None:
@@ -83,6 +83,11 @@ def main() -> None:
         help="Enable structural validation",
     )
     parser.add_argument("--no-validate", dest="validate", action="store_false")
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Promote validation warnings to errors",
+    )
 
     parser.add_argument(
         "--log-level",
@@ -127,7 +132,10 @@ def main() -> None:
     )
 
     logging.info("Building ontology graph...")
-    g = build_ontology(model, args.ontology_iri, args.prefixes)
+    if args.validate:
+        g = build_ontology(model, args.ontology_iri, args.prefixes, strict=args.strict)
+    else:
+        g = build_ontology(model, args.ontology_iri, args.prefixes)
 
     if args.imports and not args.no_imports:
         for iri in args.imports:

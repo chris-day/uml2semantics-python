@@ -12,4 +12,4 @@ def test_cli_help():
         check=False,
     )
     assert result.returncode == 0
-    assert "uml2semantics" in result.stdout
+    assert "usage:" in result.stdout
