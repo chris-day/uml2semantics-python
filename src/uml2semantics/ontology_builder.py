@@ -1,8 +1,8 @@
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union, Optional
 import logging
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
 from rdflib.namespace import RDF, RDFS, OWL, XSD
-from .model import Model, UmlDatatype, UmlAttribute, UmlClass
+from .model import Model, UmlDatatype, UmlAttribute, UmlClass, AnnotationAssertion, AnnotationProperty
 
 log = logging.getLogger(__name__)
 
@@ -152,10 +152,14 @@ def _emit_named_datatype(g: Graph, dt: UmlDatatype, prefix_map: Dict[str, str]) 
             g.add((dt_uri, OWL.equivalentClass, base_uri))
         return
 
+    if base_uri is None:
+        raise ValueError(
+            f"Datatype '{dt.name or dt.curie}' has facet constraints but no BaseDatatype; "
+            "populate BaseDatatype in Datatypes.tsv to avoid defaulting to xsd:string."
+        )
+
     restr_dt = BNode()
     g.add((restr_dt, RDF.type, RDFS.Datatype))
-    if base_uri is None:
-        base_uri = XSD.string
     g.add((restr_dt, OWL.onDatatype, base_uri))
     facet_nodes = _facet_nodes_for_datatype(
         g,
@@ -174,6 +178,19 @@ def _emit_named_datatype(g: Graph, dt: UmlDatatype, prefix_map: Dict[str, str]) 
         lst = _make_rdf_list(g, facet_nodes)
         g.add((restr_dt, OWL.withRestrictions, lst))
     g.add((dt_uri, OWL.equivalentClass, restr_dt))
+
+
+def _annotation_value_node(value: str, lang: Optional[str], dtype: Optional[str], prefix_map: Dict[str, str]):
+    if dtype:
+        dt_uri = _base_datatype_iri(dtype, prefix_map) if dtype.startswith("xsd:") or ":" in dtype else URIRef(dtype)
+        return Literal(value, datatype=dt_uri)
+    if lang:
+        return Literal(value, lang=lang)
+    if ":" in value:
+        pfx, local = value.split(":", 1)
+        if pfx in prefix_map:
+            return URIRef(prefix_map[pfx] + local)
+    return Literal(value)
 
 
 def _emit_inline_datatype_range(g: Graph, attr: UmlAttribute, prefix_map: Dict[str, str]) -> BNode:
@@ -346,6 +363,18 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
     for dt in model.datatypes.values():
         _emit_named_datatype(g, dt, prefix_map)
 
+    # Annotation properties
+    for ap in model.annotation_properties.values():
+        ap_ident = _preferred_ident(ap.curie, ap.name, "AnnotationProperty")
+        if not ap_ident:
+            continue
+        ap_uri = _expand(ap_ident, prefix_map)
+        g.add((ap_uri, RDF.type, OWL.AnnotationProperty))
+        if ap.name:
+            g.add((ap_uri, RDFS.label, Literal(ap.name)))
+        if ap.definition:
+            g.add((ap_uri, RDFS.comment, Literal(ap.definition)))
+
     class_token_to_uri, enum_token_to_uri, dt_token_to_uri = _build_token_index(model, prefix_map)
 
     restrictions_by_domain: Dict[URIRef, List[URIRef]] = {}
@@ -515,6 +544,13 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str) -> Graph:
             g.add((disj, RDF.type, OWL.AllDisjointClasses))
             disjoint_set = [class_uri] + choice_members
             g.add((disj, OWL.members, _make_rdf_list(g, disjoint_set)))
+
+    # Apply annotations
+    for ann in model.annotations:
+        target_uri = _expand(ann.target_curie, prefix_map)
+        prop_uri = _expand(ann.property_curie, prefix_map)
+        val_node = _annotation_value_node(ann.value, ann.language, ann.datatype, prefix_map)
+        g.add((target_uri, prop_uri, val_node))
 
     return g
 

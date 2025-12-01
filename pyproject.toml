@@ -1,6 +1,6 @@
 [project]
 name = "uml2semantics"
-version = "0.9.24"
+version = "0.9.26"
 description = "Convert UML-style TSV specifications into OWL 2 ontologies, including ISO 20022-style Choice patterns."
 authors = [
   { name = "Chris Day" }
@@ -28,3 +28,6 @@ where = ["src"]
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
+[tool.pytest.ini_options]
+pythonpath = "src"
+addopts = [ "--import-mode=importlib"]
