@@ -8,7 +8,7 @@ from rdflib import URIRef
 from .tsv_loader import load_model
 from .ontology_builder import build_ontology
 
-VERSION = "0.9.28"
+VERSION = "0.9.29"
 
 
 def main() -> None:
@@ -36,6 +36,12 @@ def main() -> None:
             "iso20022dt=http://purl.org/iso20022/dt/;"
             "xsd=http://www.w3.org/2001/XMLSchema#"
         ),
+    )
+    parser.add_argument(
+        "--prefix",
+        dest="prefixes",
+        type=str,
+        help="Alias for --prefixes (comma/semicolon separated pfx=IRI entries)",
     )
 
     parser.add_argument(
@@ -133,16 +139,18 @@ def main() -> None:
 
     logging.info("Building ontology graph...")
     if args.validate:
+        logging.info("Validation enabled.")
         g = build_ontology(model, args.ontology_iri, args.prefixes, strict=args.strict)
     else:
+        logging.info("Validation disabled.")
         g = build_ontology(model, args.ontology_iri, args.prefixes)
+
+    if args.profile and args.profile != "generic":
+        logging.info("Profile '%s' requested; profile-specific behavior is not implemented yet (no-op).", args.profile)
 
     if args.imports and not args.no_imports:
         for iri in args.imports:
             g.add((URIRef(args.ontology_iri), OWL.imports, URIRef(iri)))
-
-    if args.validate:
-        logging.info("Validation enabled (placeholder hook).")
 
     if args.dry_run:
         logging.info("Dry run complete; ontology not written to disk.")

@@ -1,7 +1,7 @@
 from typing import Dict, List, Tuple, Union, Optional
 import logging
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
-from rdflib.namespace import RDF, RDFS, OWL, XSD
+from rdflib.namespace import RDF, RDFS, OWL, XSD, XMLNS
 from .model import Model, UmlDatatype, UmlAttribute, UmlClass, AnnotationAssertion, AnnotationProperty
 
 log = logging.getLogger(__name__)
@@ -28,6 +28,7 @@ def parse_prefixes(prefix_str: str) -> Dict[str, str]:
         "rdfs": str(RDFS),
         "owl": str(OWL),
         "xsd": str(XSD),
+        "xml": str(XMLNS),
     }
     if not prefix_str:
         return prefix_map
@@ -422,16 +423,23 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str, strict: boo
 
     _validate_model(model, prefix_map, strict=strict)
 
-    g.bind("rdf", RDF)
-    g.bind("rdfs", RDFS)
-    g.bind("owl", OWL)
-    g.bind("xsd", XSD)
+    g.bind("rdf", RDF, replace=True)
+    g.bind("rdfs", RDFS, replace=True)
+    g.bind("owl", OWL, replace=True)
+    g.bind("xsd", XSD, replace=True)
+    g.bind("xml", XMLNS, replace=True)
 
     for pfx, iri in prefix_map.items():
-        g.bind(pfx, Namespace(iri))
+        g.bind(pfx, Namespace(iri), replace=True)
 
     ont_uri = URIRef(ontology_iri)
     g.add((ont_uri, RDF.type, OWL.Ontology))
+    # Default/base prefix for ontology
+    if ontology_iri:
+        base_ns = ontology_iri
+        if not base_ns.endswith(("#", "/")):
+            base_ns = base_ns + "#"
+        g.bind("", Namespace(base_ns))
 
     # Index classes by token (curie and name) for Choice lookup and defaults
     class_by_token: Dict[str, UmlClass] = {}
