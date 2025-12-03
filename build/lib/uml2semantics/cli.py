@@ -8,7 +8,7 @@ from rdflib import URIRef
 from .tsv_loader import load_model
 from .ontology_builder import build_ontology
 
-VERSION = "0.9.29"
+VERSION = "0.9.30"
 
 
 def main() -> None:
@@ -145,12 +145,12 @@ def main() -> None:
         logging.info("Validation disabled.")
         g = build_ontology(model, args.ontology_iri, args.prefixes)
 
+    if args.profile and args.profile != "generic":
+        logging.info("Profile '%s' requested; profile-specific behavior is not implemented yet (no-op).", args.profile)
+
     if args.imports and not args.no_imports:
         for iri in args.imports:
             g.add((URIRef(args.ontology_iri), OWL.imports, URIRef(iri)))
-
-    if args.validate:
-        logging.info("Validation enabled (placeholder hook).")
 
     if args.dry_run:
         logging.info("Dry run complete; ontology not written to disk.")
