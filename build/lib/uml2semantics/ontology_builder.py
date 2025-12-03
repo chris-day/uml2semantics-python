@@ -434,12 +434,12 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str, strict: boo
 
     ont_uri = URIRef(ontology_iri)
     g.add((ont_uri, RDF.type, OWL.Ontology))
-    # Default/base prefix for ontology
+    # Default/base prefix for ontology (for Prefix: : ...)
     if ontology_iri:
         base_ns = ontology_iri
         if not base_ns.endswith(("#", "/")):
             base_ns = base_ns + "#"
-        g.bind("", Namespace(base_ns))
+        g.bind("", Namespace(base_ns), replace=True)
 
     # Index classes by token (curie and name) for Choice lookup and defaults
     class_by_token: Dict[str, UmlClass] = {}
