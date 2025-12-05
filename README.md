@@ -4,6 +4,9 @@
 A refactored Python implementation of the original `uml2semantics` tool, updated so that
 OWL 2 semantics are used consistently throughout the generated ontology.
 
+This work would not be possible without Henriette Harmse's https://henrietteharmse.com/uml-vs-owl/uml-class-diagram-to-owl-and-sroiq-reference/ and the reference implementation here https://github.com/henrietteharmse/uml2semantics
+
+
 ## Key features
 
 - Converts UML models (via XMI/TSV) into OWL 2 ontologies
