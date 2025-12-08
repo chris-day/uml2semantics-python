@@ -1,5 +1,5 @@
 
-# uml2semantics-python 0.9.30
+# uml2semantics-python 0.9.31
 
 A refactored Python implementation of the original `uml2semantics` tool, updated so that
 OWL 2 semantics are used consistently throughout the generated ontology.
@@ -41,7 +41,7 @@ Supported options (compatible with 0.8.2, extended):
 
 - `-i, --input PATH` - UML/XMI input file
 - `-o, --output PATH` - Output ontology path (RDF/XML, Turtle, or OWL/XML)
-- `-f, --format {rdfxml,turtle,owlxml}` - Output serialisation format
+- `-f, --format {rdfxml,turtle,nt,jsonld,trig,n3}` - Output serialisation format
 - `-b, --base-iri IRI` - Base IRI for generated ontology
 - `-p, --profile {generic,iso20022}` - Mapping profile to apply
 - `--imports IRI` - Additional ontology IRI to import (repeatable)
