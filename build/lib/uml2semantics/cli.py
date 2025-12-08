@@ -8,7 +8,7 @@ from rdflib import URIRef
 from .tsv_loader import load_model
 from .ontology_builder import build_ontology
 
-VERSION = "0.9.30"
+VERSION = "0.9.31"
 
 
 def main() -> None:
@@ -47,7 +47,7 @@ def main() -> None:
     parser.add_argument(
         "--format",
         type=str,
-        choices=["rdfxml", "turtle", "owlxml"],
+        choices=["rdfxml", "turtle", "nt", "jsonld", "trig", "n3"],
         default="rdfxml",
         help="Serialisation format for the ontology",
     )
@@ -163,10 +163,14 @@ def main() -> None:
     rdflib_fmt = fmt
     if fmt == "rdfxml":
         rdflib_fmt = "xml"
-    elif fmt == "turtle":
-        rdflib_fmt = "turtle"
-    elif fmt == "owlxml":
-        rdflib_fmt = "owlxml"
+    elif fmt == "jsonld":
+        rdflib_fmt = "json-ld"
+    elif fmt == "nt":
+        rdflib_fmt = "nt"
+    elif fmt == "trig":
+        rdflib_fmt = "trig"
+    elif fmt == "n3":
+        rdflib_fmt = "n3"
 
     logging.info("Serialising ontology as %s to %s", rdflib_fmt, args.output)
     if rdflib_fmt == "xml":
