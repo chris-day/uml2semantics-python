@@ -1,8 +1,9 @@
 from typing import Dict, List, Tuple, Union, Optional
 import logging
+from urllib.parse import urlparse
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
-from rdflib.namespace import RDF, RDFS, OWL, XSD, XMLNS
-from .model import Model, UmlDatatype, UmlAttribute, UmlClass, AnnotationAssertion, AnnotationProperty
+from rdflib.namespace import RDF, RDFS, OWL, XSD, XMLNS, DCTERMS, DCAT
+from .model import Model, UmlDatatype, UmlAttribute, UmlClass, AnnotationAssertion, AnnotationProperty, PropertyChain
 
 log = logging.getLogger(__name__)
 
@@ -29,6 +30,8 @@ def parse_prefixes(prefix_str: str) -> Dict[str, str]:
         "owl": str(OWL),
         "xsd": str(XSD),
         "xml": str(XMLNS),
+        "dct": str(DCTERMS),
+        "dcat": str(DCAT),
     }
     if not prefix_str:
         return prefix_map
@@ -132,6 +135,13 @@ def _base_datatype_iri(base: str, prefix_map: Dict[str, str]) -> URIRef:
         if pfx in prefix_map:
             return URIRef(prefix_map[pfx] + local)
     return URIRef(base)
+
+
+def _is_iri(value: str) -> bool:
+    if not value or " " in value:
+        return False
+    parsed = urlparse(value)
+    return bool(parsed.scheme)
 
 
 def _emit_named_datatype(g: Graph, dt: UmlDatatype, prefix_map: Dict[str, str]) -> None:
@@ -271,6 +281,15 @@ def _build_token_index(model: Model, prefix_map: Dict[str, str]):
     return class_token_to_uri, enum_token_to_uri, dt_token_to_uri
 
 
+def _ensure_object_property(g: Graph, prop_uri: URIRef) -> None:
+    g.add((prop_uri, RDF.type, OWL.ObjectProperty))
+
+
+def _add_literal_if_absent(g: Graph, subject: URIRef, predicate: URIRef, value: str) -> None:
+    if (subject, predicate, None) not in g:
+        g.add((subject, predicate, Literal(value)))
+
+
 def _classify_target(
     attr: UmlAttribute,
     prefix_map: Dict[str, str],
@@ -399,6 +418,25 @@ def _validate_model(model: Model, prefix_map: Dict[str, str], strict: bool = Fal
         if not ann.target_curie or not ann.property_curie or ann.value == "":
             errors.append("Annotation row is missing TargetCurie, AnnotationProperty, or Value")
 
+    # Property chains
+    for pc in model.property_chains:
+        if not pc.enabled:
+            continue
+        if not pc.superproperty_iri:
+            errors.append("Property chain is missing superproperty_iri")
+            continue
+        if not _is_iri(pc.superproperty_iri):
+            errors.append(f"Property chain superproperty_iri is not a valid IRI: {pc.superproperty_iri}")
+        if len(pc.chain_property_iris) < 2:
+            errors.append(
+                f"Property chain for {pc.superproperty_iri} must have length >= 2"
+            )
+        for iri in pc.chain_property_iris:
+            if not _is_iri(iri):
+                errors.append(
+                    f"Property chain for {pc.superproperty_iri} has invalid IRI: {iri}"
+                )
+
     flat_warnings = []
     if missing_prefixes:
         flat_warnings.append("Prefixes not declared: " + ", ".join(sorted(missing_prefixes)))
@@ -428,6 +466,8 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str, strict: boo
     g.bind("owl", OWL, replace=True)
     g.bind("xsd", XSD, replace=True)
     g.bind("xml", XMLNS, replace=True)
+    g.bind("dct", DCTERMS, replace=True)
+    g.bind("dcat", DCAT, replace=True)
 
     for pfx, iri in prefix_map.items():
         g.bind(pfx, Namespace(iri), replace=True)
@@ -628,6 +668,24 @@ def build_ontology(model: Model, ontology_iri: str, prefix_str: str, strict: boo
     for domain_uri, restrs in restrictions_by_domain.items():
         for r in restrs:
             g.add((domain_uri, RDFS.subClassOf, r))
+
+    # Property chain axioms
+    for pc in model.property_chains:
+        if not pc.enabled:
+            continue
+        super_uri = URIRef(pc.superproperty_iri)
+        _ensure_object_property(g, super_uri)
+        for iri in pc.chain_property_iris:
+            _ensure_object_property(g, URIRef(iri))
+        chain_nodes = [URIRef(iri) for iri in pc.chain_property_iris]
+        head = _make_rdf_list(g, chain_nodes)
+        g.add((super_uri, OWL.propertyChainAxiom, head))
+        if pc.label:
+            _add_literal_if_absent(g, super_uri, RDFS.label, pc.label)
+        if pc.comment:
+            _add_literal_if_absent(g, super_uri, RDFS.comment, pc.comment)
+        if pc.source:
+            _add_literal_if_absent(g, super_uri, DCTERMS.source, pc.source)
 
     # Choice semantics: ChoiceOf interpreted as alternative classes (preferred) or attributes (fallback)
     for cls in model.classes.values():

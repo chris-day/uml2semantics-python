@@ -82,6 +82,16 @@ class AnnotationAssertion:
 
 
 @dataclass
+class PropertyChain:
+    superproperty_iri: str
+    chain_property_iris: List[str]
+    label: Optional[str] = None
+    comment: Optional[str] = None
+    source: Optional[str] = None
+    enabled: bool = True
+
+
+@dataclass
 class Model:
     classes: Dict[str, UmlClass] = field(default_factory=dict)
     enumerations: Dict[str, UmlEnumeration] = field(default_factory=dict)
@@ -90,3 +100,4 @@ class Model:
     attributes: List[UmlAttribute] = field(default_factory=list)
     annotation_properties: Dict[str, AnnotationProperty] = field(default_factory=dict)
     annotations: List[AnnotationAssertion] = field(default_factory=list)
+    property_chains: List[PropertyChain] = field(default_factory=list)
