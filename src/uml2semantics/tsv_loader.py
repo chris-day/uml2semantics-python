@@ -1,6 +1,7 @@
 import csv
 from pathlib import Path
 from typing import Optional
+from urllib.parse import urlparse
 from .model import (
     Model,
     UmlClass,
@@ -10,6 +11,7 @@ from .model import (
     UmlAttribute,
     AnnotationProperty,
     AnnotationAssertion,
+    PropertyChain,
 )
 
 
@@ -18,6 +20,13 @@ def _read_tsv(path: Path):
         reader = csv.DictReader(f, delimiter="\t")
         for row in reader:
             yield {(k or "").strip(): (v or "").strip() for k, v in row.items()}
+
+
+def _read_tsv_with_row(path: Path):
+    with path.open(encoding="utf-8-sig", newline="") as f:
+        reader = csv.DictReader(f, delimiter="\t")
+        for idx, row in enumerate(reader, start=2):
+            yield idx, {(k or "").strip(): (v or "").strip() for k, v in row.items()}
 
 
 def _to_int(value: str) -> Optional[int]:
@@ -29,6 +38,23 @@ def _to_int(value: str) -> Optional[int]:
         return None
 
 
+def _to_bool(value: str, default: bool = True) -> bool:
+    if value is None or value == "":
+        return default
+    return value.strip().lower() not in ("false", "0", "no", "n")
+
+
+def _is_iri(value: str) -> bool:
+    if not value or " " in value:
+        return False
+    parsed = urlparse(value)
+    return bool(parsed.scheme)
+
+
+def _property_chain_error(row: int, column: str, message: str) -> None:
+    raise ValueError(f"property_chains.tsv row {row} column '{column}': {message}")
+
+
 def load_model(
     classes_tsv: Optional[Path] = None,
     enums_tsv: Optional[Path] = None,
@@ -37,6 +63,7 @@ def load_model(
     attributes_tsv: Optional[Path] = None,
     annotation_properties_tsv: Optional[Path] = None,
     annotations_tsv: Optional[Path] = None,
+    property_chains_tsv: Optional[Path] = None,
 ) -> Model:
     model = Model()
 
@@ -201,5 +228,39 @@ def load_model(
                 datatype=dtype,
             )
             model.annotations.append(ann)
+
+    # Property chains
+    if property_chains_tsv:
+        for row_num, r in _read_tsv_with_row(property_chains_tsv):
+            enabled = _to_bool(r.get("enabled") or r.get("Enabled") or "", default=True)
+            if not enabled:
+                continue
+            superprop = r.get("superproperty_iri") or r.get("SuperpropertyIri") or ""
+            if not superprop:
+                _property_chain_error(row_num, "superproperty_iri", "missing required IRI")
+            if not _is_iri(superprop):
+                _property_chain_error(row_num, "superproperty_iri", f"invalid IRI '{superprop}'")
+            chain_raw = r.get("chain_property_iris") or r.get("ChainPropertyIris") or ""
+            if not chain_raw:
+                _property_chain_error(row_num, "chain_property_iris", "missing required chain list")
+            chain_list = [c.strip() for c in chain_raw.split("|") if c.strip()]
+            if len(chain_list) < 2:
+                _property_chain_error(
+                    row_num,
+                    "chain_property_iris",
+                    "property chain must have length >= 2",
+                )
+            for iri in chain_list:
+                if not _is_iri(iri):
+                    _property_chain_error(row_num, "chain_property_iris", f"invalid IRI '{iri}'")
+            pc = PropertyChain(
+                superproperty_iri=superprop,
+                chain_property_iris=chain_list,
+                label=r.get("label") or r.get("Label") or None,
+                comment=r.get("comment") or r.get("Comment") or None,
+                source=r.get("source") or r.get("Source") or None,
+                enabled=True,
+            )
+            model.property_chains.append(pc)
 
     return model

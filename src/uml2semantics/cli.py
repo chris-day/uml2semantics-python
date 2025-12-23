@@ -23,6 +23,7 @@ def main() -> None:
     parser.add_argument("--datatypes", "-d", type=Path, help="Datatypes TSV file")
     parser.add_argument("--annotation-properties", type=Path, help="Annotation properties TSV file")
     parser.add_argument("--annotations", type=Path, help="Annotations TSV file")
+    parser.add_argument("--property-chains", type=Path, help="Property chains TSV file")
 
     parser.add_argument("--output", "-o", type=Path, help="Output ontology file")
     parser.add_argument("--ontology-iri", "-i", type=str, help="Ontology IRI")
@@ -135,6 +136,7 @@ def main() -> None:
         attributes_tsv=args.attributes,
         annotation_properties_tsv=args.annotation_properties,
         annotations_tsv=args.annotations,
+        property_chains_tsv=args.property_chains,
     )
 
     logging.info("Building ontology graph...")
