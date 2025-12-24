@@ -1,5 +1,6 @@
 import argparse
 import logging
+import sys
 from pathlib import Path
 
 from rdflib.namespace import OWL
@@ -37,12 +38,6 @@ def main() -> None:
             "iso20022dt=http://purl.org/iso20022/dt/;"
             "xsd=http://www.w3.org/2001/XMLSchema#"
         ),
-    )
-    parser.add_argument(
-        "--prefix",
-        dest="prefixes",
-        type=str,
-        help="Alias for --prefixes (comma/semicolon separated pfx=IRI entries)",
     )
 
     parser.add_argument(
@@ -115,6 +110,10 @@ def main() -> None:
         action="store_true",
         help="Show version information and exit",
     )
+
+    if len(sys.argv) == 1:
+        parser.print_help()
+        return
 
     args = parser.parse_args()
 
