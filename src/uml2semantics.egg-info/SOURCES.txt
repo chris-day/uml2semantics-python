@@ -18,4 +18,6 @@ tests/test_cli_smoke.py
 tests/test_golden.py
 tests/test_import.py
 tests/test_imports.py
+tests/test_property_chain_golden.py
+tests/test_property_chains.py
 tests/test_smoke.py

@@ -12,6 +12,10 @@ uml2semantics --help
 
 to see the full list of options.
 
+Invoking `uml2semantics` with no arguments prints the help text.
+
+Prefix declarations are supplied via `--prefixes` (comma/semicolon separated `pfx=IRI` entries).
+
 Additional TSV inputs:
 
 - `--property-chains PATH` - TSV defining OWL 2 object property chains
