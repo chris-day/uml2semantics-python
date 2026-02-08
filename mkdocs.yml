@@ -40,7 +40,7 @@ markdown_extensions:
       custom_fences:
         - name: mermaid
           class: mermaid
-          format: !!python/name:mermaid2.fence_mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 
 # ----------------------------------------------------------------------------
 # Plugins
@@ -50,11 +50,6 @@ plugins:
   # 1. Search index
   - search:
       lang: en
-
-
-  - mermaid2:
-      arguments:
-        theme: forest
 
   # 2. Documentation topology graph
   - graph:
@@ -98,5 +93,4 @@ nav:
   - Troubleshooting: Troubleshooting.md
   - Architecture: Architecture.md
   - Golden Tests: Golden-Tests.md
-
 
