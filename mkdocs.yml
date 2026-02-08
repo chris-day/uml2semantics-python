@@ -61,6 +61,9 @@ plugins:
       type: iso_date
       fallback_to_build_date: true
 
+  - mermaid2:
+      arguments:
+        theme: forest
   # 4. Output optimisation
   - minify:
       minify_html: true
