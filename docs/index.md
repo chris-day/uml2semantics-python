@@ -3,10 +3,10 @@
 Welcome to the **uml2semantics** project wiki.
 
 ```mermaid
-graph TD
-  A[TSV Inputs] --> B[uml2semantics CLI]
-  B --> C[OWL 2 Ontology]
-  B --> D[Reasoner and tools such as Protege and SHACL]
+flowchart TD
+  A["TSV Inputs"] --> B["uml2semantics CLI"]
+  B --> C["OWL 2 Ontology"]
+  B --> D["Reasoner and tools such as Protege and SHACL"]
 ```
 
 ## Wiki Contents
