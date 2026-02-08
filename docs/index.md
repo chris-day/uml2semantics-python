@@ -10,14 +10,14 @@ flowchart TD
 ```
 
 ## Wiki Contents
-- [[Getting-Started]]
-- [[TSV-Specification]]
-- [[Choice-Patterns]]
-- [[Datatypes-and-Facets]]
-- [[Enumerations]]
-- [[Annotations]]
-- [[CLI-Usage]]
-- [[Architecture]]
-- [[Examples]]
-- [[Troubleshooting]]
-- [[Golden-Tests]]
+- [Getting Started](Getting-Started.md)
+- [TSV Specification](TSV-Specification.md)
+- [Choice Patterns](Choice-Patterns.md)
+- [Datatypes and Facets](Datatypes-and-Facets.md)
+- [Enumerations](Enumerations.md)
+- [Annotations](Annotations.md)
+- [CLI Usage](CLI-Usage.md)
+- [Architecture](Architecture.md)
+- [Examples](Examples.md)
+- [Troubleshooting](Troubleshooting.md)
+- [Golden Tests](Golden-Tests.md)
