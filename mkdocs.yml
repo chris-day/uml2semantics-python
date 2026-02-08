@@ -65,8 +65,6 @@ plugins:
       minify_js: true
       minify_css: true
 
-  # 5. Privacy hardening (recommended for standards docs)
-  - privacy
 
 # ----------------------------------------------------------------------------
 # Optional CSS (safe to include even if file doesn’t exist yet)
