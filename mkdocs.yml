@@ -35,12 +35,12 @@ theme:
 # ----------------------------------------------------------------------------
 # Markdown extensions
 # ----------------------------------------------------------------------------
-#markdown_extensions:
-# - admonition
-# - toc:
-#     permalink: true
-# - pymdownx.superfences
-# - pymdownx.highlight
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid
 
 # ----------------------------------------------------------------------------
 # Plugins
