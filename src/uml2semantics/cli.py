@@ -124,7 +124,22 @@ def main() -> None:
     logging.basicConfig(level=getattr(logging, args.log_level.upper()))
 
     if not args.ontology_iri:
-        raise ValueError("You must provide --ontology-iri")
+        parser.error("Missing required --ontology-iri value.")
+
+    if not any([
+        args.classes,
+        args.attributes,
+        args.enumerations,
+        args.enum_values,
+        args.datatypes,
+        args.annotation_properties,
+        args.annotations,
+    ]):
+        parser.error(
+            "No input TSVs provided. Supply at least one of "
+            "--classes, --attributes, --enumerations, --enum-values, "
+            "--datatypes, --annotation-properties, or --annotations."
+        )
 
     logging.info("Loading model from TSV bundle...")
     model = load_model(
@@ -158,7 +173,7 @@ def main() -> None:
         return
 
     if not args.output:
-        raise ValueError("Output file is required unless running with --dry-run")
+        parser.error("Missing required --output value (or use --dry-run).")
 
     fmt = args.format.lower()
     rdflib_fmt = fmt
