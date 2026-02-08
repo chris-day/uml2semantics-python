@@ -51,6 +51,11 @@ plugins:
   - search:
       lang: en
 
+
+  - mermaid2:
+      arguments:
+        theme: forest
+
   # 2. Documentation topology graph
   - graph:
       name: title      # use page titles as node labels
@@ -61,9 +66,6 @@ plugins:
       type: iso_date
       fallback_to_build_date: true
 
-  - mermaid2:
-      arguments:
-        theme: forest
   # 4. Output optimisation
   - minify:
       minify_html: true
