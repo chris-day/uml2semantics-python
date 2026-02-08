@@ -82,4 +82,16 @@ extra_css:
 # ----------------------------------------------------------------------------
 nav:
   - Home: Home.md
+  - Getting Started: Getting-Started.md
+  - TSV Specification: TSV-Specification.md
+  - CLI Usage: CLI-Usage.md
+  - Examples: Examples.md
+  - Choice Patterns: Choice-Patterns.md
+  - Datatypes and Facets: Datatypes-and-Facets.md
+  - Enumerations: Enumerations.md
+  - Annotations: Annotations.md
+  - Troubleshooting: Troubleshooting.md
+  - Architecture: Architecture.md
+  - Golden Tests: Golden-Tests.md
+
 
