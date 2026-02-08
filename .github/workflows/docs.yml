@@ -35,6 +35,7 @@ jobs:
           pip install \
             mkdocs \
             mkdocs-material \
+			mkdocs-mermaid2-plugin \
             mkdocs-network-graph-plugin \
             mkdocs-minify-plugin \
             mkdocs-git-revision-date-localized-plugin 
