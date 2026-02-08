@@ -81,7 +81,7 @@ extra_css:
 # - Do NOT rename pages casually
 # ----------------------------------------------------------------------------
 nav:
-  - Home: Home.md
+  - Home: index.md
   - Getting Started: Getting-Started.md
   - TSV Specification: TSV-Specification.md
   - CLI Usage: CLI-Usage.md
