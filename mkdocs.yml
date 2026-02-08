@@ -1,0 +1,85 @@
+# ============================================================================
+# MkDocs configuration
+# ============================================================================
+# Location: repository root (NOT under docs/)
+# Purpose : Build Wiki-compatible documentation with search + network graph
+# ============================================================================
+
+site_name: Documentation
+site_description: Authoritative documentation published via GitHub Pages
+site_author: Chris Day
+
+# ----------------------------------------------------------------------------
+# Content location
+# ----------------------------------------------------------------------------
+docs_dir: docs
+
+# CRITICAL: preserves GitHub Wiki-style URLs and inbound links
+use_directory_urls: false
+
+# ----------------------------------------------------------------------------
+# Theme
+# ----------------------------------------------------------------------------
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+
+# ----------------------------------------------------------------------------
+# Markdown extensions
+# ----------------------------------------------------------------------------
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.highlight
+
+# ----------------------------------------------------------------------------
+# Plugins
+# Order matters
+# ----------------------------------------------------------------------------
+plugins:
+  # 1. Search index
+  - search:
+      lang: en
+
+  # 2. Documentation topology graph
+  - graph:
+      name: title      # use page titles as node labels
+      debug: false
+
+  # 3. Revision metadata (governance / audit signal)
+  - git-revision-date-localized:
+      type: iso_date
+      fallback_to_build_date: true
+
+  # 4. Output optimisation
+  - minify:
+      minify_html: true
+      minify_js: true
+      minify_css: true
+
+  # 5. Privacy hardening (recommended for standards docs)
+  - privacy
+
+# ----------------------------------------------------------------------------
+# Optional CSS (safe to include even if file doesn’t exist yet)
+# ----------------------------------------------------------------------------
+extra_css:
+  - stylesheets/extra.css
+
+# ----------------------------------------------------------------------------
+# Navigation
+# NOTE:
+# - Keep filenames exactly as they exist in the former Wiki
+# - Do NOT rename pages casually
+# ----------------------------------------------------------------------------
+nav:
+  - Home: Home.md
+
