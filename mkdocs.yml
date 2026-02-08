@@ -8,6 +8,8 @@
 site_name: Documentation
 site_description: Authoritative documentation published via GitHub Pages
 site_author: Chris Day
+site_url: https://chris-day.github.io/uml2semantics-python/
+
 
 # ----------------------------------------------------------------------------
 # Content location
