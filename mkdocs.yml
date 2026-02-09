@@ -5,8 +5,8 @@
 # Purpose : Build Wiki-compatible documentation with search + network graph
 # ============================================================================
 
-site_name: Documentation
-site_description: Authoritative documentation published via GitHub Pages
+site_name: UML2Semantics in Python
+site_description: Enhanced and enriched UML2Semantics in Python
 site_author: Chris Day
 site_url: https://chris-day.github.io/uml2semantics-python/
 
