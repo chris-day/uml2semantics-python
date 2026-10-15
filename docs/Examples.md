@@ -284,7 +284,53 @@ uml2semantics   -c Classes.tsv   -a Attributes.tsv   --datatypes Datatypes.tsv  
 
 ---
 
-# 10. Navigation
+# 10. Build the ISO 20022 Ontology
+
+From the repository root, activate the virtual environment, install the CLI, and
+create the output directory. If `.venv` does not exist yet, create it first with
+`python3 -m venv .venv`.
+
+```bash
+source .venv/bin/activate
+python -m pip install -e .
+mkdir -p build
+```
+
+Build an OWL ontology in RDF/XML from the ISO 20022 TSV bundle in `test-tsv/`:
+
+```bash
+uml2semantics \
+  --classes test-tsv/class.tsv \
+  --attributes test-tsv/attribute.tsv \
+  --datatypes test-tsv/datatypes.tsv \
+  --enumerations test-tsv/enumeration.tsv \
+  --enum-values test-tsv/enumerationIndividuals.tsv \
+  --annotation-properties test-tsv/AnnotationProperties.tsv \
+  --annotations test-tsv/Annotations.tsv \
+  --ontology-iri 'http://iso20022.org/iso20022' \
+  --prefixes 'iso20022=http://iso20022.org/iso20022/;iso20022dt=http://purl.org/iso20022/dt/;iso20022cd=http://purl.org/iso20022/cd/;iso20022mm=http://purl.org/iso20022/mm/' \
+  --format rdfxml \
+  --output build/iso20022.owl
+```
+
+Use the filenames exactly as shown. The similarly named `Classes.tsv`,
+`Attributes.tsv`, `Enumerations.tsv`, and `EnumerationNamedValues.tsv` are separate
+files; if a file starts with `version https://git-lfs.github.com/spec/v1`, it is
+a Git LFS pointer, not usable TSV input.
+
+For the same OWL ontology in Turtle, replace the final two options with:
+
+```bash
+  --format turtle \
+  --output build/iso20022.ttl
+```
+
+To build the graph in memory without writing output, replace `--output` and its
+filename with `--dry-run`.
+
+---
+
+# 11. Navigation
 
 - Back to [[TSV-Specification]]  
 - Continue to [[Golden-Tests]]  
