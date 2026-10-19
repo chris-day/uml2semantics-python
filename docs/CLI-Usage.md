@@ -30,6 +30,9 @@ Path to EnumerationNamedValues.tsv defining enumeration individuals.
 
 ---
 
+### --property-chains
+Path to a [property chains TSV](Property-Chains.md).
+
 ## 3. Annotation Parameters
 
 ### --annotation-properties
@@ -42,11 +45,11 @@ Path to Annotations.tsv.
 
 ## 4. Namespace and Prefix Parameters
 
-### --prefixes / --prefix
+### --prefixes
 Declare one or more prefixes using comma- or semicolon-separated syntax. Each entry may use `=` or `:` between prefix and IRI:
 ```
 --prefixes "iso=http://example/ns#;rdfs=http://www.w3.org/2000/01/rdf-schema#"
---prefix "iso:http://example/ns#,rdfs:http://www.w3.org/2000/01/rdf-schema#"
+--prefixes "iso:http://example/ns#,rdfs:http://www.w3.org/2000/01/rdf-schema#"
 ```
 
 ### --profile
@@ -59,7 +62,7 @@ Mapping profile to apply (`generic` or `iso20022`). Current behavior is a no-op 
 Promote validation warnings to errors.
 
 ### --no-validate / --validate
-Toggle structural validation (default is enabled).
+Validation is enabled by default. In the current implementation, `--no-validate` still calls the builder, which performs validation; it also omits the strict argument. Do not use it to bypass validation.
 
 ### --log-level
 Set logging verbosity (`ERROR`, `WARNING`, `INFO`, `DEBUG`).
@@ -74,7 +77,7 @@ Serialisation format (`rdfxml`, `turtle`, `nt`, `jsonld`, `trig`, `n3`).
 Set `xml:base` when writing RDF/XML.
 
 ### --imports / --no-imports
-Add `owl:imports` axioms or suppress automatic imports.
+Add explicit `owl:imports` axioms (repeat `--imports IRI`). `--no-imports` suppresses those additions; there are no automatic imports.
 
 ### --version
 Print the tool version and exit.
@@ -85,17 +88,17 @@ Print the tool version and exit.
 
 ### Example: Minimal
 ```
-uml2semantics -c Classes.tsv -a Attributes.tsv -o out.ttl -i http://example.org/ns
+uml2semantics -c Classes.tsv -a Attributes.tsv -o out.ttl -i http://example.org/ns --format turtle
 ```
 
 ### Example: Complete ISO-style model
 ```
-uml2semantics   -c tsv/Classes.tsv   -a tsv/Attributes.tsv   --datatypes tsv/Datatypes.tsv   -e tsv/Enumerations.tsv   -n tsv/EnumerationNamedValues.tsv   --annotation-properties tsv/AnnotationProperties.tsv   --annotations tsv/Annotations.tsv   -o build/iso-model.ttl   -p "iso:http://iso20022.example/ontology#,rdfs:http://www.w3.org/2000/01/rdf-schema#"   -i http://iso20022.example/ontology
+uml2semantics   -c tsv/Classes.tsv   -a tsv/Attributes.tsv   --datatypes tsv/Datatypes.tsv   -e tsv/Enumerations.tsv   -n tsv/EnumerationNamedValues.tsv   --annotation-properties tsv/AnnotationProperties.tsv   --annotations tsv/Annotations.tsv   -o build/iso-model.ttl   --prefixes "iso:http://iso20022.example/ontology#,rdfs:http://www.w3.org/2000/01/rdf-schema#"   -i http://iso20022.example/ontology --format turtle
 ```
 
 ### Example: Validation Only
 ```
-uml2semantics -c C.tsv -a A.tsv --datatypes D.tsv --validate -o val.ttl -i http://validation/ns --dry-run
+uml2semantics -c C.tsv -a A.tsv --datatypes D.tsv --validate -o val.ttl -i http://validation/ns --dry-run --format turtle
 ```
 
 ---
@@ -113,7 +116,7 @@ uml2semantics -c C.tsv -a A.tsv --datatypes D.tsv --validate -o val.ttl -i http:
 | --annotations | Annotations.tsv |
 | -o | Output ontology file |
 | -i | Base ontology IRI |
-| --prefix / --prefixes | Prefix declarations |
+| --prefixes | Prefix declarations |
 | --profile | Mapping profile (generic/iso20022) |
 | --imports / --no-imports | Imports control |
 | --format | Output format |

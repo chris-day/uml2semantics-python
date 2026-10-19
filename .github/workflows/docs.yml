@@ -2,61 +2,54 @@ name: Build & Publish Documentation
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: "docs-pages"
+  group: docs-pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install documentation dependencies
+          python-version: '3.14'
+      - name: Install locked documentation dependencies
         run: |
-          pip install \
-            mkdocs \
-            mkdocs-material \
-            mkdocs-mermaid2-plugin \
-            mkdocs-network-graph-plugin \
-            mkdocs-minify-plugin \
-            mkdocs-git-revision-date-localized-plugin 
-
-      - name: Build MkDocs site
+          python -m venv .venv
+          .venv/bin/python -m pip install -r requirements-docs.txt -r requirements-docs-browser.txt
+          .venv/bin/python -m pip check
+      - name: Build and validate documentation
         run: |
-          mkdocs build --strict
-
+          .venv/bin/zensical build -f zensical.toml --clean --strict
+          .venv/bin/python scripts/check_docs.py
+      - name: Verify browser rendering and privacy
+        run: |
+          .venv/bin/python -m playwright install --with-deps chromium
+          .venv/bin/python scripts/check_docs_browser.py
       - name: Upload Pages artefact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
           path: site
 
   deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
-
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

@@ -2,3 +2,7 @@ helper.txt
 test-tsv
 .venv/
 src/uml2semantics/__pycache__
+site/
+.cache/
+__pycache__/
+*.py[cod]

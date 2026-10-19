@@ -1,0 +1,64 @@
+[project]
+site_name = "uml2semantics"
+site_description = "Convert UML-style TSV models into OWL 2 ontologies with datatypes, choices, annotations, and property chains."
+site_author = "Chris Day"
+site_url = "https://chris-day.github.io/uml2semantics-python/"
+repo_url = "https://github.com/chris-day/uml2semantics-python"
+repo_name = "chris-day/uml2semantics-python"
+docs_dir = "docs"
+site_dir = "site"
+extra_javascript = ["assets/vendor/mermaid/mermaid.min.js"]
+use_directory_urls = false
+exclude_docs = "GDSN-TSV-Mapping-v0.1.0.md"
+copyright = '<a href="#__consent">Change cookie settings</a>'
+nav = [
+ { "Home" = "index.md" },
+ { "Getting started" = [ { "Installation and first run" = "Getting-Started.md" }, { "Examples" = "Examples.md" } ] },
+ { "Reference" = [ { "CLI" = "CLI-Usage.md" }, { "TSV specification" = "TSV-Specification.md" }, { "Python API" = "Python-API.md" } ] },
+ { "Modelling" = [ { "Choice patterns" = "Choice-Patterns.md" }, { "Datatypes and facets" = "Datatypes-and-Facets.md" }, { "Enumerations" = "Enumerations.md" }, { "Annotations" = "Annotations.md" }, { "Property chains" = "Property-Chains.md" } ] },
+ { "Development" = [ { "Architecture" = "Architecture.md" }, { "Golden tests" = "Golden-Tests.md" }, { "Documentation maintenance" = "Documentation.md" } ] },
+ { "Troubleshooting" = "Troubleshooting.md" },
+ { "Privacy" = "Privacy.md" }
+]
+
+[project.theme]
+variant = "modern"
+favicon = "assets/images/favicon.png"
+font = false
+features = ["navigation.sections", "content.code.copy", "content.action.copy"]
+
+[project.extra]
+generator = false
+
+[project.extra.consent]
+title = "Privacy preferences"
+description = "This site stores your privacy choice locally. Optional GitHub requests show repository statistics only with your permission. No analytics are configured. Search and diagrams run locally in your browser."
+actions = ["accept", "reject", "manage"]
+
+[project.extra.consent.cookies.github]
+name = "GitHub repository statistics"
+checked = false
+
+[project.validation]
+invalid_links = true
+invalid_link_anchors = true
+
+[project.plugins.search]
+
+[project.plugins.llmstxt]
+full_output = "llms-full.txt"
+
+[project.plugins.llmstxt.sections]
+"Getting started" = ["index.md", "Getting-Started.md", "Examples.md"]
+"Reference" = ["CLI-Usage.md", "TSV-Specification.md", "Python-API.md"]
+"Modelling" = ["Choice-Patterns.md", "Datatypes-and-Facets.md", "Enumerations.md", "Annotations.md", "Property-Chains.md"]
+"Development and support" = ["Architecture.md", "Golden-Tests.md", "Troubleshooting.md", "Documentation.md", "Privacy.md"]
+
+[project.markdown_extensions.pymdownx.superfences]
+custom_fences = [{ name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" }]
+
+[project.markdown_extensions.admonition]
+[project.markdown_extensions.tables]
+[project.markdown_extensions.pymdownx.details]
+[project.markdown_extensions.pymdownx.tabbed]
+alternate_style = true

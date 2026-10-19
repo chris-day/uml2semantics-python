@@ -255,7 +255,7 @@ choice class, the converter logs a warning and skips that member.
 
 # 13. Navigation
 
-- Return to [[TSV-Specification]]  
-- Go to [[Datatypes-and-Facets]]  
-- Go to [[CLI-Usage]]  
-- Back to [[Home]]
+- Return to [TSV Specification](TSV-Specification.md)
+- Go to [Datatypes and Facets](Datatypes-and-Facets.md)
+- Go to [CLI Usage](CLI-Usage.md)
+- Back to [Home](index.md)

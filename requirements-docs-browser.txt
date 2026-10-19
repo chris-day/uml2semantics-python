@@ -1,0 +1,5 @@
+# Optional browser verification tooling, installed in the same .venv.
+playwright==1.64.0
+greenlet==3.5.6
+pyee==14.0.0
+typing_extensions==4.16.0

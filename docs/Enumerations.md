@@ -203,8 +203,8 @@ graph TD
 
 # 9. Navigation
 
-- Return to [[TSV-Specification]]  
-- Continue to [[Datatypes-and-Facets]]  
-- Continue to [[Annotations]]  
-- Back to [[Home]]
+- Return to [TSV Specification](TSV-Specification.md)
+- Continue to [Datatypes and Facets](Datatypes-and-Facets.md)
+- Continue to [Annotations](Annotations.md)
+- Back to [Home](index.md)
 

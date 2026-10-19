@@ -147,7 +147,7 @@ Validation warnings (prefix): <prefixes>
 ```
 
 Fix:
-- Add the missing prefix declarations via `--prefix` or `--prefixes`.
+- Add the missing prefix declarations via `--prefixes`.
 
 ## Unresolved choice members
 
@@ -189,6 +189,6 @@ Fix:
 
 # 6. Navigation
 
-- Return to [[Home]]
-- Go to [[CLI-Usage]]
-- Go to [[TSV-Specification]]
+- Return to [Home](index.md)
+- Go to [CLI Usage](CLI-Usage.md)
+- Go to [TSV Specification](TSV-Specification.md)

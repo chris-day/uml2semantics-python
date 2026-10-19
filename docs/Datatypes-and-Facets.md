@@ -227,7 +227,7 @@ graph TD
 
 # 14. Navigation
 
-- Return to [[TSV-Specification]]  
-- Go to [[Choice-Patterns]]  
-- Go to [[CLI-Usage]]  
-- Back to [[Home]]
+- Return to [TSV Specification](TSV-Specification.md)
+- Go to [Choice Patterns](Choice-Patterns.md)
+- Go to [CLI Usage](CLI-Usage.md)
+- Back to [Home](index.md)

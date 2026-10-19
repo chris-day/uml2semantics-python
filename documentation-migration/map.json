@@ -1,0 +1,373 @@
+[
+  {
+    "source": "docs/Annotations.md",
+    "destination": "docs/Annotations.md",
+    "decision": "retain",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "672b0d8c19da022f622cf2e975fd5da68513ff1aacee3f0b0f6fc8c82d3c88cf"
+  },
+  {
+    "source": "docs/Architecture.md",
+    "destination": "docs/Architecture.md",
+    "decision": "retain",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "b29a083fd9b3dfde4088dd43103afbed307b2e3cc99bdee3e14154032067fc28"
+  },
+  {
+    "source": "docs/CLI-Usage.md",
+    "destination": "docs/CLI-Usage.md",
+    "decision": "retain",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "96fd794b6ede3ec000d6769f3f6babbbd19e44add0c017b2ff31c4d6954ad994"
+  },
+  {
+    "source": "docs/Choice-Patterns.md",
+    "destination": "docs/Choice-Patterns.md",
+    "decision": "retain",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "481c9f2b6a4026e8e89be827df1fa40b58f4a8e10e972e9e3ebe289841378af0"
+  },
+  {
+    "source": "docs/Datatypes-and-Facets.md",
+    "destination": "docs/Datatypes-and-Facets.md",
+    "decision": "retain",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "ee7b87d8fdf57726f4d9aca50d2ea46412f7a4d4b3f8b70cb4802e6f0edf7857"
+  },
+  {
+    "source": "docs/Enumerations.md",
+    "destination": "docs/Enumerations.md",
+    "decision": "retain",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "1e33eb1f27e6c580858dd784fc759d3357f6af85e0882116e2b2328f5c14d48f"
+  },
+  {
+    "source": "docs/Examples.md",
+    "destination": "docs/Examples.md",
+    "decision": "retain",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "6d56792d3c2123f17583d75dcb889a987c49001a80b4c78e6faac2815439b15a"
+  },
+  {
+    "source": "docs/GDSN-TSV-Mapping-v0.1.0.md",
+    "destination": null,
+    "decision": "exclude",
+    "reason": "Untracked investigation with local operational paths; preserve untouched, exclude from site and LLM exports pending publication review.",
+    "sha256": "b45443a9e3d29521eb1b6128828e4d69d8b20aff56c9fe8a424540dba0a3a0a3"
+  },
+  {
+    "source": "docs/Getting-Started.md",
+    "destination": "docs/Getting-Started.md",
+    "decision": "retain",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "3b28e06dfad36defe30979b721a8a255a04febb2e0ffd4d421824901f562b504"
+  },
+  {
+    "source": "docs/Golden-Tests.md",
+    "destination": "docs/Golden-Tests.md",
+    "decision": "retain",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "ce1689ef7cc151d78f2a80fe4448bb2a8d4632ee68541b3c8eb6d1877d03bef2"
+  },
+  {
+    "source": "docs/TSV-Specification.md",
+    "destination": "docs/TSV-Specification.md",
+    "decision": "retain",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "f3acc39d8f204afb034ac813d136c973397d5921a73826a6d2b25927fd2e5834"
+  },
+  {
+    "source": "docs/Troubleshooting.md",
+    "destination": "docs/Troubleshooting.md",
+    "decision": "retain",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "1595221317fb131e308d71734dbe560b52807aa55e4d103595d19161c1230209"
+  },
+  {
+    "source": "docs/assets/images/favicon.png",
+    "destination": "docs/assets/images/favicon.png",
+    "decision": "retain",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "700ac014ff753785547d3702dd40b34bea895e8d0fbcaead1f6e004d0117050f"
+  },
+  {
+    "source": "docs/index.md",
+    "destination": "docs/index.md",
+    "decision": "retain",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "3f7c136aea521e54229341af6eba3ca21752ec1e96dc430eff1fd634f9c43c2b"
+  },
+  {
+    "source": "local-wiki/Annotations.md",
+    "destination": "docs/Annotations.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "672b0d8c19da022f622cf2e975fd5da68513ff1aacee3f0b0f6fc8c82d3c88cf"
+  },
+  {
+    "source": "local-wiki/Architecture.md",
+    "destination": "docs/Architecture.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "b29a083fd9b3dfde4088dd43103afbed307b2e3cc99bdee3e14154032067fc28"
+  },
+  {
+    "source": "local-wiki/CLI-Usage.md",
+    "destination": "docs/CLI-Usage.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "96fd794b6ede3ec000d6769f3f6babbbd19e44add0c017b2ff31c4d6954ad994"
+  },
+  {
+    "source": "local-wiki/Choice-Patterns.md",
+    "destination": "docs/Choice-Patterns.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "481c9f2b6a4026e8e89be827df1fa40b58f4a8e10e972e9e3ebe289841378af0"
+  },
+  {
+    "source": "local-wiki/Datatypes-and-Facets.md",
+    "destination": "docs/Datatypes-and-Facets.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "ee7b87d8fdf57726f4d9aca50d2ea46412f7a4d4b3f8b70cb4802e6f0edf7857"
+  },
+  {
+    "source": "local-wiki/Enumerations.md",
+    "destination": "docs/Enumerations.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "1e33eb1f27e6c580858dd784fc759d3357f6af85e0882116e2b2328f5c14d48f"
+  },
+  {
+    "source": "local-wiki/Examples.md",
+    "destination": "docs/Examples.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "7555886a91faf18f372ffd727fa020aec9b9031718935f50a7c610a772f11ec9"
+  },
+  {
+    "source": "local-wiki/Getting-Started.md",
+    "destination": "docs/Getting-Started.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "3b28e06dfad36defe30979b721a8a255a04febb2e0ffd4d421824901f562b504"
+  },
+  {
+    "source": "local-wiki/Golden-Tests.md",
+    "destination": "docs/Golden-Tests.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "ce1689ef7cc151d78f2a80fe4448bb2a8d4632ee68541b3c8eb6d1877d03bef2"
+  },
+  {
+    "source": "local-wiki/Home.md",
+    "destination": "docs/index.md",
+    "decision": "consolidate",
+    "reason": "Merge welcome and navigation into home page.",
+    "sha256": "59c8e0faeb6c320bdfc75bb48d94b297d55fc91b63996dc3552100b721e39aad"
+  },
+  {
+    "source": "local-wiki/TSV-Specification.md",
+    "destination": "docs/TSV-Specification.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "f3acc39d8f204afb034ac813d136c973397d5921a73826a6d2b25927fd2e5834"
+  },
+  {
+    "source": "local-wiki/Troubleshooting.md",
+    "destination": "docs/Troubleshooting.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "1595221317fb131e308d71734dbe560b52807aa55e4d103595d19161c1230209"
+  },
+  {
+    "source": "local-wiki/_Sidebar.md",
+    "destination": "zensical.toml",
+    "decision": "consolidate",
+    "reason": "Use sidebar as navigation input; do not publish as a page.",
+    "sha256": "0b497c5b30e3d1584194c50efb9e705d65864a56e5af6707810e022404fe4a3b"
+  },
+  {
+    "source": "remote-wiki/Annotations.md",
+    "destination": "docs/Annotations.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "672b0d8c19da022f622cf2e975fd5da68513ff1aacee3f0b0f6fc8c82d3c88cf"
+  },
+  {
+    "source": "remote-wiki/Architecture.md",
+    "destination": "docs/Architecture.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "b29a083fd9b3dfde4088dd43103afbed307b2e3cc99bdee3e14154032067fc28"
+  },
+  {
+    "source": "remote-wiki/CLI-Usage.md",
+    "destination": "docs/CLI-Usage.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "96fd794b6ede3ec000d6769f3f6babbbd19e44add0c017b2ff31c4d6954ad994"
+  },
+  {
+    "source": "remote-wiki/Choice-Patterns.md",
+    "destination": "docs/Choice-Patterns.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "481c9f2b6a4026e8e89be827df1fa40b58f4a8e10e972e9e3ebe289841378af0"
+  },
+  {
+    "source": "remote-wiki/Datatypes-and-Facets.md",
+    "destination": "docs/Datatypes-and-Facets.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "ee7b87d8fdf57726f4d9aca50d2ea46412f7a4d4b3f8b70cb4802e6f0edf7857"
+  },
+  {
+    "source": "remote-wiki/Enumerations.md",
+    "destination": "docs/Enumerations.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "1e33eb1f27e6c580858dd784fc759d3357f6af85e0882116e2b2328f5c14d48f"
+  },
+  {
+    "source": "remote-wiki/Examples.md",
+    "destination": "docs/Examples.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "7555886a91faf18f372ffd727fa020aec9b9031718935f50a7c610a772f11ec9"
+  },
+  {
+    "source": "remote-wiki/Getting-Started.md",
+    "destination": "docs/Getting-Started.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "3b28e06dfad36defe30979b721a8a255a04febb2e0ffd4d421824901f562b504"
+  },
+  {
+    "source": "remote-wiki/Golden-Tests.md",
+    "destination": "docs/Golden-Tests.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "ce1689ef7cc151d78f2a80fe4448bb2a8d4632ee68541b3c8eb6d1877d03bef2"
+  },
+  {
+    "source": "remote-wiki/Home.md",
+    "destination": "docs/index.md",
+    "decision": "consolidate",
+    "reason": "Merge welcome and navigation into home page.",
+    "sha256": "59c8e0faeb6c320bdfc75bb48d94b297d55fc91b63996dc3552100b721e39aad"
+  },
+  {
+    "source": "remote-wiki/TSV-Specification.md",
+    "destination": "docs/TSV-Specification.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "f3acc39d8f204afb034ac813d136c973397d5921a73826a6d2b25927fd2e5834"
+  },
+  {
+    "source": "remote-wiki/Troubleshooting.md",
+    "destination": "docs/Troubleshooting.md",
+    "decision": "consolidate",
+    "reason": "Preserve existing page path and content.",
+    "sha256": "1595221317fb131e308d71734dbe560b52807aa55e4d103595d19161c1230209"
+  },
+  {
+    "source": "README.md",
+    "destination": "README.md; docs/Python-API.md; docs/Property-Chains.md",
+    "decision": "adapt",
+    "reason": "Keep concise entry point; move API and property-chain details; correct obsolete XMI CLI claims.",
+    "sha256": "590a19ca417d363f670e540e8558b6aa94256161aff306eff232aa4e26f76e9e"
+  },
+  {
+    "source": "examples/README.md",
+    "destination": "examples/README.md",
+    "decision": "adapt",
+    "reason": "Retain integration file and external example attribution; link to site examples.",
+    "sha256": "593d08e1a2a1d9844321c227d70138aa8250de02ecc49a490f639b850d6646e4"
+  },
+  {
+    "source": "CHANGELOG.md",
+    "destination": "CHANGELOG.md",
+    "decision": "adapt",
+    "reason": "Keep canonical release history; link from site.",
+    "sha256": "d583fb017ebc00d12e59997f8653ccfd151d9ad7eb9ae87e40b8d6a936a952cf"
+  },
+  {
+    "source": "LICENSE",
+    "destination": "LICENSE",
+    "decision": "adapt",
+    "reason": "Keep canonical Apache-2.0 license; link from site.",
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  },
+  {
+    "source": "mkdocs.yml",
+    "destination": "zensical.toml",
+    "decision": "adapt",
+    "reason": "Replace active config; retain rollback copy at documentation-migration/mkdocs.yml.legacy and original Git history.",
+    "sha256": "71eb0be7e8d28ea85461e9651467f7bc7c4995e7619e219c36b8dde7cedf2cb1"
+  },
+  {
+    "source": ".github/workflows/docs.yml",
+    "destination": ".github/workflows/docs.yml",
+    "decision": "adapt",
+    "reason": "Adapt established Pages deployment and add PR checks.",
+    "sha256": "195c211f7b76cbb235460b7a2f62bc41b02fa4faa0bb655cb56ea262289b845f"
+  },
+  {
+    "source": "/var/software/gitrepos/favicon.png",
+    "destination": "docs/assets/images/favicon.png",
+    "decision": "adapt",
+    "reason": "Copy supplied favicon without alteration.",
+    "sha256": "700ac014ff753785547d3702dd40b34bea895e8d0fbcaead1f6e004d0117050f"
+  },
+  {
+    "source": "docs/Documentation.md",
+    "destination": "docs/Documentation.md",
+    "decision": "adapt",
+    "reason": "New migration support page or intentionally vendored asset; not a duplicate wiki source.",
+    "sha256": "4f28ba285df94601d106d100e4d0671078becde798770227bd951797afc91e9d"
+  },
+  {
+    "source": "docs/Privacy.md",
+    "destination": "docs/Privacy.md",
+    "decision": "adapt",
+    "reason": "New migration support page or intentionally vendored asset; not a duplicate wiki source.",
+    "sha256": "d4b327fc5b95287b44efc9b501001d30e51bbe5efaf069496f675f15ce03f143"
+  },
+  {
+    "source": "docs/Property-Chains.md",
+    "destination": "docs/Property-Chains.md",
+    "decision": "adapt",
+    "reason": "New migration support page or intentionally vendored asset; not a duplicate wiki source.",
+    "sha256": "6b33e1f086fd07bac04ce0f42f72815a0826fb30a5416281cdd71710748e7082"
+  },
+  {
+    "source": "docs/Python-API.md",
+    "destination": "docs/Python-API.md",
+    "decision": "adapt",
+    "reason": "New migration support page or intentionally vendored asset; not a duplicate wiki source.",
+    "sha256": "dcffd657d0a1ff3cac974fc36308765aa495a8da976f8d5dcf068ab39e371b7d"
+  },
+  {
+    "source": "docs/assets/vendor/mermaid/LICENSE",
+    "destination": "docs/assets/vendor/mermaid/LICENSE",
+    "decision": "adapt",
+    "reason": "New migration support page or intentionally vendored asset; not a duplicate wiki source.",
+    "sha256": "ec9fb67dcb25eccc416ed56e1aab819222c805a2a4bfe4cb19e7556bf2ffde80"
+  },
+  {
+    "source": "docs/assets/vendor/mermaid/NOTICE.txt",
+    "destination": "docs/assets/vendor/mermaid/NOTICE.txt",
+    "decision": "adapt",
+    "reason": "New migration support page or intentionally vendored asset; not a duplicate wiki source.",
+    "sha256": "cb08297ff18697591e76730d1033137eb5d4a5fb064c6791a6ca9e0bdf03c508"
+  },
+  {
+    "source": "docs/assets/vendor/mermaid/mermaid.min.js",
+    "destination": "docs/assets/vendor/mermaid/mermaid.min.js",
+    "decision": "adapt",
+    "reason": "New migration support page or intentionally vendored asset; not a duplicate wiki source.",
+    "sha256": "581ed7d74bd9048d0e3a91363927d72ef22942d7722546b27f7cc29e35390eb8"
+  }
+]

@@ -190,8 +190,8 @@ graph TD
 
 Continue to:
 
-- [[CLI-Usage]] to learn how annotations integrate into CLI arguments  
-- [[Datatypes-and-Facets]] for modelling constraints  
-- [[Examples]] for practical TSV samples  
+- [CLI Usage](CLI-Usage.md) to learn how annotations integrate into CLI arguments
+- [Datatypes and Facets](Datatypes-and-Facets.md) for modelling constraints
+- [Examples](Examples.md) for practical TSV samples
 
-Return to [[Home]].
+Return to [Home](index.md).

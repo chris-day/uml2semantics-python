@@ -11,6 +11,10 @@ Each example illustrates:
 
 These examples form the basis for the *golden tests* and are designed for reproducibility.
 
+The aligned table snippets below illustrate the schema; save actual input with
+tab separators. Run commands from the directory containing your TSV files and
+declare the prefixes used in them. SHACL validation is external to this tool.
+
 ---
 
 # 1. Example 1 – Minimal Class + Attribute Model
@@ -45,7 +49,7 @@ DataProperty: Id
 ## 1.4 CLI Command
 
 ```
-uml2semantics -c Classes.tsv -a Attributes.tsv -o out.ttl -i http://example.org/ns
+uml2semantics -c Classes.tsv -a Attributes.tsv -o out.ttl -i http://example.org/ns --format turtle
 ```
 
 ---
@@ -279,7 +283,7 @@ graph TD
 Use:
 
 ```
-uml2semantics   -c Classes.tsv   -a Attributes.tsv   --datatypes Datatypes.tsv   --enumerations Enumerations.tsv   --enum-values EnumerationNamedValues.tsv   --annotation-properties AnnotationProperties.tsv   --annotations Annotations.tsv   -o out.ttl   -i http://example.org/ns   -p "ex:http://example.org/ns#,dct:http://purl.org/dc/terms#"
+uml2semantics   -c Classes.tsv   -a Attributes.tsv   --datatypes Datatypes.tsv   --enumerations Enumerations.tsv   --enum-values EnumerationNamedValues.tsv   --annotation-properties AnnotationProperties.tsv   --annotations Annotations.tsv   -o out.ttl   -i http://example.org/ns   --prefixes "ex:http://example.org/ns#,dct:http://purl.org/dc/terms#" --format turtle
 ```
 
 ---
@@ -330,7 +334,7 @@ filename with `--dry-run`.
 
 # 11. Navigation
 
-- Back to [[TSV-Specification]]  
-- Continue to [[Golden-Tests]]  
-- Return to [[Home]]
+- Back to [TSV Specification](TSV-Specification.md)
+- Continue to [Golden Tests](Golden-Tests.md)
+- Return to [Home](index.md)
 

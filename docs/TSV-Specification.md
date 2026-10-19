@@ -260,8 +260,8 @@ graph TD
 # 11. Next Steps
 
 Continue to:
-- [[Choice-Patterns]] for exclusive union modelling  
-- [[Datatypes-and-Facets]] for datatype restriction logic  
-- [[CLI-Usage]] for full command reference  
+- [Choice Patterns](Choice-Patterns.md) for exclusive union modelling
+- [Datatypes and Facets](Datatypes-and-Facets.md) for datatype restriction logic
+- [CLI Usage](CLI-Usage.md) for full command reference
 
-Return to [[Home]].
+Return to [Home](index.md).

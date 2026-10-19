@@ -11,12 +11,14 @@ This Getting Started guide provides a full onboarding workflow covering installa
 ## 1.1. Install from source
 In your project directory:
 ```
-pip install .
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install .
 ```
 
-## 1.2. Install globally (editable mode)
+## 1.2. Install in the active environment (editable mode)
 ```
-pip install -e .
+python -m pip install -e .
 ```
 
 ## 1.3. Verify installation
@@ -86,10 +88,10 @@ Two files:
 
 # 4. Minimal Example Run
 
-Generate a basic ontology:
+Create the output directory with `mkdir -p out`, then generate a basic ontology:
 
 ```
-uml2semantics   -c tsv/Classes.tsv   -a tsv/Attributes.tsv   -o out/ontology.ttl   -i http://example.org/ontology
+uml2semantics   -c tsv/Classes.tsv   -a tsv/Attributes.tsv   -o out/ontology.ttl   -i http://example.org/ontology --format turtle
 ```
 
 Result:  
@@ -100,7 +102,7 @@ Result:
 # 5. Full Example Run (all TSVs)
 
 ```
-uml2semantics   -c tsv/Classes.tsv   -a tsv/Attributes.tsv   --datatypes tsv/Datatypes.tsv   --enumerations tsv/Enumerations.tsv   --enum-values tsv/EnumerationNamedValues.tsv   --annotation-properties tsv/AnnotationProperties.tsv   --annotations tsv/Annotations.tsv   -o out/model.ttl   -p "iso:http://example.org/ns#,rdfs:http://www.w3.org/2000/01/rdf-schema#,skos:http://www.w3.org/2004/02/skos/core#}"   -i http://example.org/ns
+uml2semantics   -c tsv/Classes.tsv   -a tsv/Attributes.tsv   --datatypes tsv/Datatypes.tsv   --enumerations tsv/Enumerations.tsv   --enum-values tsv/EnumerationNamedValues.tsv   --annotation-properties tsv/AnnotationProperties.tsv   --annotations tsv/Annotations.tsv   -o out/model.ttl   --prefixes "iso:http://example.org/ns#,rdfs:http://www.w3.org/2000/01/rdf-schema#,skos:http://www.w3.org/2004/02/skos/core#"   -i http://example.org/ns --format turtle
 ```
 
 This produces a fully structured OWL ontology including:
@@ -147,8 +149,8 @@ This workflow supports FAIR modelling, ISO-compatible structures, and reproducib
 # 8. Next Steps
 
 Now continue to:
-- [[TSV-Specification]] for a detailed schema definition  
-- [[CLI-Usage]] for full command-line reference  
-- [[Examples]] for sample TSV sets and outputs
+- [TSV Specification](TSV-Specification.md) for a detailed schema definition
+- [CLI Usage](CLI-Usage.md) for full command-line reference
+- [Examples](Examples.md) for sample TSV sets and outputs
 
-Return to [[Home]].
+Return to [Home](index.md).

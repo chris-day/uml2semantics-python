@@ -92,7 +92,7 @@ The converter core is the heart of `uml2semantics`. It is responsible for:
 - Applying multiplicity rules as cardinality and some values from restrictions.  
 - Applying annotation properties and annotation assertions.  
 
-The core is designed to be **deterministic**. Given the same TSV inputs and CLI arguments it must produce exactly the same ontology every time.
+The core is designed to be **deterministic**. Equivalent inputs produce equivalent RDF graphs; blank-node identifiers and serialisation order need not be byte-for-byte identical.
 
 ```mermaid
 graph TD
@@ -108,7 +108,7 @@ graph TD
 
 ## 2.4 OWL Graph and Serialisation Layer
 
-The converter core creates an in memory OWL graph using a standard RDF library. The graph is then serialised based on the requested file extension:
+The converter core creates an in memory OWL graph using a standard RDF library. The graph is serialised using `--format` (default `rdfxml`), independently of the filename. Conventional extensions are:
 
 - `.ttl` -> Turtle  
 - `.rdf` or `.owl` -> RDF XML  
@@ -151,7 +151,7 @@ This section walks through the **end to end data flow** once the user invokes th
 ## 3.1 Input Resolution
 
 1. Expand and validate TSV file paths.  
-2. Resolve prefixes from the `-p` option into a prefix map.  
+2. Resolve prefixes from the `--prefixes` option into a prefix map.
 3. Create an ontology IRI from `-i`.
 
 ## 3.2 Model Loading
@@ -199,7 +199,7 @@ The architecture supports several layers of validation:
 
 - Optional stricter behavior (`--strict`) promotes validation warnings to errors.
 
-Errors are typically raised as exceptions, which are caught in the CLI, printed with context, and cause a non zero exit code.
+Argument errors use argparse diagnostics. Loader and builder exceptions currently propagate with a traceback and a non-zero exit code; see [Troubleshooting](Troubleshooting.md).
 
 ---
 
@@ -255,10 +255,10 @@ This ensures that any change in TSV readers, semantic model or converter core is
 
 # 7. How Components Map To Files
 
-Although internal module names can evolve, a typical layout is:
+The current TSV conversion path uses:
 
-- a converter module implementing the `Uml2OwlConverter` core class  
-- TSV utilities module for parsing and validation  
+- `src/uml2semantics/ontology_builder.py` implementing `build_ontology`
+- `src/uml2semantics/tsv_loader.py` implementing `load_model`
 - CLI entry point module exposing the `uml2semantics` command  
 - tests modules for golden regression tests and unit tests  
 - examples folder with TSVs and golden outputs  
@@ -270,7 +270,7 @@ This mapping keeps responsibilities clear and supports modular extension.
 
 # 8. Navigation
 
-- Return to [[Home]]  
-- Go to [[TSV-Specification]] for detailed TSV schemas  
-- Go to [[CLI-Usage]] for full command line options  
-- Go to [[Examples]] for end to end sample models
+- Return to [Home](index.md)
+- Go to [TSV Specification](TSV-Specification.md) for detailed TSV schemas
+- Go to [CLI Usage](CLI-Usage.md) for full command line options
+- Go to [Examples](Examples.md) for end to end sample models

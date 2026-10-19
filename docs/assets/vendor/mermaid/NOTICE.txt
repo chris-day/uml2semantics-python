@@ -1,0 +1,5 @@
+Mermaid 11.17.2, MIT license (see LICENSE).
+Source: https://unpkg.com/mermaid@11.17.2/dist/mermaid.min.js
+Upstream: https://github.com/mermaid-js/mermaid
+Vendored intentionally for local diagram rendering without CDN requests.
+Keep license comments in the bundle. Update only after testing every diagram.

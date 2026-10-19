@@ -1,0 +1,35 @@
+{
+  "favicon_dimensions": [
+    57,
+    38
+  ],
+  "before_selection": {
+    "external": [],
+    "storage": {}
+  },
+  "rejected": {
+    "external": [],
+    "storage": {
+      "/uml2semantics-python/.__consent": "{}"
+    }
+  },
+  "accepted": {
+    "external": [
+      "https://api.github.com/repos/chris-day/uml2semantics-python/releases/latest",
+      "https://api.github.com/repos/chris-day/uml2semantics-python"
+    ],
+    "storage": {
+      "/uml2semantics-python/.__consent": "{\"github\":true}"
+    }
+  },
+  "revoked": {
+    "external": [],
+    "storage": {
+      "/uml2semantics-python/.__consent": "{}"
+    }
+  },
+  "search": "PASS: datatype results displayed",
+  "diagrams": 12,
+  "page_errors": [],
+  "http_errors": []
+}

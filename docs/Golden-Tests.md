@@ -19,6 +19,10 @@ The current repository contains a lightweight golden-style test in
 This confirms the end-to-end pipeline works and produces a valid RDF graph,
 but it does **not** compare full outputs against a canonical `expected.ttl`.
 
+`tests/test_property_chain_golden.py` also serialises and reparses a graph,
+checking the ordered `owl:propertyChainAxiom` members. It checks RDF structure,
+not byte-for-byte Turtle output.
+
 ---
 
 # 2. What Is Not Implemented Yet
@@ -54,6 +58,6 @@ This would allow detection of changes in:
 
 # 4. Navigation
 
-- Return to [[Home]]
-- Go to [[Examples]]
-- Go to [[CLI-Usage]]
+- Return to [Home](index.md)
+- Go to [Examples](Examples.md)
+- Go to [CLI Usage](CLI-Usage.md)
