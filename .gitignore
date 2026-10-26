@@ -6,3 +6,8 @@ site/
 .cache/
 __pycache__/
 *.py[cod]
+
+/examples/*.tsv
+/examples/*.owl
+/out.owl
+/testdata/property_chains*.tsv

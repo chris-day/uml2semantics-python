@@ -319,6 +319,8 @@ uml2semantics \
 
 Use the filenames exactly as shown. The similarly named `Classes.tsv`,
 `Attributes.tsv`, `Enumerations.tsv`, and `EnumerationNamedValues.tsv` are separate
+files. The `test-tsv/` inputs are local-only and must be supplied before running
+this example.
 
 For the same OWL ontology in Turtle, replace the final two options with:
 

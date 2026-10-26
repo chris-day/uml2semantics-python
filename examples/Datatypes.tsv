@@ -1,2 +1,0 @@
-Curie	Name	BaseDatatype	Definition	Pattern	MinLength	MaxLength	MinInclusive	MaxInclusive	MinExclusive	MaxExclusive	TotalDigits	FractionDigits
-iso:LEI	LEI20	xsd:string	20-character Legal Entity Identifier	[A-Z0-9]{20}	20	20						

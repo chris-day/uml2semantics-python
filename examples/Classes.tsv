@@ -1,3 +1,0 @@
-Curie	Name	ParentNames	Definition	IsAbstract	ChoiceOf	ChoiceSemantics
-iso:Account	Account		Customer account for payments			
-iso:Party	Party		Generic party			

@@ -17,6 +17,9 @@ uml2semantics --help
 python -m pytest
 ```
 
+Example TSV and OWL files that were previously distributed with the repository
+are now local-only. Supply those files before running examples that use them.
+
 See [Getting started](docs/Getting-Started.md) for conversion commands and
 [documentation maintenance](docs/Documentation.md) for Zensical setup, preview,
 build, verification, and deployment instructions.
