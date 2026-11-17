@@ -4,7 +4,7 @@ Convert UML-style TSV models into OWL 2 ontologies, including classes, propertie
 enumerations, datatype facets, choice patterns, annotations, and property chains.
 The current CLI consumes TSV files; the profile option is a placeholder.
 
-[Documentation](https://chris-day.github.io/uml2semantics-python/) ·
+[Documentation](https://uml2semantics.perdl.com/) ·
 [Examples](docs/Examples.md) · [Changelog](CHANGELOG.md) · [Apache-2.0 license](LICENSE)
 
 ## Install and run

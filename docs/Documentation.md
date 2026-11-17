@@ -29,8 +29,7 @@ documentation requirements does not replace the application environment.
 ```
 
 The preview at `http://localhost:8000` is local only. Production is configured for
-`https://chris-day.github.io/uml2semantics-python/`, inherited from MkDocs and
-confirmed reachable during migration. Existing `.html` paths are retained.
+`https://uml2semantics.perdl.com/`. Existing `.html` page filenames are retained.
 `site/` and caches are generated, ignored files.
 
 ## Browser checks

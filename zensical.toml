@@ -2,7 +2,7 @@
 site_name = "uml2semantics"
 site_description = "Convert UML-style TSV models into OWL 2 ontologies with datatypes, choices, annotations, and property chains."
 site_author = "Chris Day"
-site_url = "https://chris-day.github.io/uml2semantics-python/"
+site_url = "https://uml2semantics.perdl.com/"
 repo_url = "https://github.com/chris-day/uml2semantics-python"
 repo_name = "chris-day/uml2semantics-python"
 docs_dir = "docs"
